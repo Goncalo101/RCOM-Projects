@@ -1,0 +1,11 @@
+bzero(buf, strlen(buf));
+	int i = 0;
+	do {
+		res = read(fd, &buf[i], 1);
+		if (res == -1) {
+			printf("read failed\n");
+			exit(-1);
+		}
+	} while(buf[i++] != '\0');
+	
+	printf("%s\n", buf);
