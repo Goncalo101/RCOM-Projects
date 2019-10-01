@@ -5,6 +5,9 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -56,7 +59,7 @@ int main(int argc, char** argv)
 
   /* 
     VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    leitura do(s) próximo(s) caracter(es)
+    leitura do(s) prï¿½ximo(s) caracter(es)
   */
 
 
@@ -69,43 +72,24 @@ int main(int argc, char** argv)
     }
 
     printf("New termios structure set\n");
-
-
-    //while (STOP==FALSE) {       /* loop for input */
-      //res = read(fd,buf,255);   /* returns after 5 chars have been input */
-      //buf[res]=0;               /* so we can printf... */
-      //printf(":%s:%d\n", buf, res);
-      //if (buf[res]=='z') STOP=TRUE;
-    //}
-    
-    //char temp[255];
-    
-    //// res = read(fd, temp, 255);
-    //printf("oi");	
-    ////strcpy(buf, temp);
-    //do {
-		//printf("lendo\n");
-		//res = read(fd, temp, 1);
-		//printf("lido: %d bytes string: %s ASCII: %c\n", res, temp, temp);
-		//strcat(buf, temp);
-	//} while(temp[0] != '\0');
-	// printf("%x\n", temp);
 	
 	bzero(buf, strlen(buf));
+
 	int i = 0;
 	do {
-		res = read(fd, buf, 1);
+		res = read(fd, &buf[i], sizeof(char));
 		if (res == -1) {
 			printf("read failed\n");
 			exit(-1);
 		}
 	} while(buf[i++] != '\0');
 	
-	printf("%s\n", buf);
+	printf("> %s\n", buf);
+    printf("read %d bytes\n", i);
 	
 
   /* 
-    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no guião 
+    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no guiï¿½o 
   */
 
     tcsetattr(fd,TCSANOW,&oldtio);
