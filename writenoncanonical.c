@@ -5,6 +5,9 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
@@ -56,14 +59,10 @@ int main(int argc, char** argv)
     newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
     newtio.c_cc[VMIN]     = 1;   /* blocking read until 5 chars received */
 
-
-
   /* 
     VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    leitura do(s) próximo(s) caracter(es)
+    leitura do(s) prï¿½ximo(s) caracter(es)
   */
-
-
 
     tcflush(fd, TCIOFLUSH);
 
@@ -74,43 +73,36 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
-
-
-    bzero(buf, strlen(buf));
+    bzero(buf, 255 * sizeof(char));
     
-    /*testing*/
-    //buf[25] = '\n';
-    res = read(0, buf, 255);
-    printf("STRLEN: %d\n BYTES: %d\n", strlen(buf), res);
+    res = read(STDIN_FILENO, buf, 255 * sizeof(char));
+    size_t string_length = strlen(buf);
 
-    printf("%s\n", buf);
-    
+    printf("STRLEN: %ld\n BYTES: %d\n", string_length, res);
 
-       
-    
- 
+    printf("< %s\n", buf);
 
   /* 
-    O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar 
-    o indicado no guião 
+    O ciclo FOR e as instruï¿½ï¿½es seguintes devem ser alterados de modo a respeitar 
+    o indicado no guiï¿½o 
   */
-
-    for (int i = 0; i < strlen(buf); ++i)
+ 
+    int nbytes = 0;
+    for (; nbytes <= string_length; ++nbytes)
     {
-      res = write(fd,&buf[i],1);
+      res = write(fd, &buf[nbytes], sizeof(char));
+      if (res == -1) {
+        printf("write failed\n");
+        exit(-1);
+      }
     }
-    printf("%d bytes written\n", res);
 
+    printf("wrote %d bytes\n", nbytes);
 
-
-   
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
       perror("tcsetattr");
       exit(-1);
     }
-
-
-
 
     close(fd);
     return 0;
