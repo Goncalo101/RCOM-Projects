@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 
     if ( (argc < 2) || 
   	     ((strcmp("/dev/ttyS0", argv[1])!=0) && 
-  	      (strcmp("/dev/ttyS1", argv[1])!=0) )) {
+  	      (strcmp("/dev/ttyS4", argv[1])!=0) )) {
       printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
       exit(1);
     }
@@ -73,20 +73,37 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 	
-	bzero(buf, strlen(buf));
+  	bzero(buf, strlen(buf));
 
-	int i = 0;
-	do {
-		res = read(fd, &buf[i], sizeof(char));
-		if (res == -1) {
-			printf("read failed\n");
-			exit(-1);
-		}
-	} while(buf[i++] != '\0');
-	
-	printf("> %s\n", buf);
+  	int i = 0;
+  	do {
+  		res = read(fd, &buf[i], sizeof(char));
+  		if (res == -1) {
+  			printf("read failed\n");
+  			exit(-1);
+  		}
+  	} while(buf[i++] != '\0');
+  	
+  	printf("> %s\n", buf);
     printf("read %d bytes\n", i);
-	
+
+
+    // Reenvio
+
+    size_t string_length = strlen(buf);
+    int nbytes = 0;
+    for (; nbytes <= string_length; ++nbytes)
+    {
+      res = write(fd, &buf[nbytes], sizeof(char));
+      if (res == -1) {
+        printf("write failed\n");
+        exit(-1);
+      }
+    }
+
+    printf("< %s\n", buf);
+    printf("wrote %d bytes\n", nbytes);
+  	
 
   /* 
     O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o 
