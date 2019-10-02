@@ -80,8 +80,6 @@ int main(int argc, char** argv)
 
     printf("STRLEN: %ld\n BYTES: %d\n", string_length, res);
 
-    printf("< %s\n", buf);
-
   /* 
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar 
     o indicado no gui�o 
@@ -96,8 +94,22 @@ int main(int argc, char** argv)
         exit(-1);
       }
     }
+    
+    printf("< %s\n", buf);
+    
+    bzero(buf, strlen(buf));
 
-    printf("wrote %d bytes\n", nbytes);
+	i = 0;
+	do {
+		res = read(fd, &buf[i], sizeof(char));
+		if (res == -1) {
+			printf("read failed\n");
+			exit(-1);
+		}
+	} while(buf[i++] != '\0');
+	
+	printf("> %s\n", buf);
+    printf("read %d bytes\n", i);
 
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
       perror("tcsetattr");
