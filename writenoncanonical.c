@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "connection.h"
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
@@ -84,32 +85,13 @@ int main(int argc, char** argv)
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar 
     o indicado no gui�o 
   */
- 
-    int nbytes = 0;
-    for (; nbytes <= string_length; ++nbytes)
-    {
-      res = write(fd, &buf[nbytes], sizeof(char));
-      if (res == -1) {
-        printf("write failed\n");
-        exit(-1);
-      }
-    }
+  
+    llwrite(fd, buf, string_length); 
     
-    printf("< %s\n", buf);
-    
-    bzero(buf, strlen(buf));
+  
 
-	i = 0;
-	do {
-		res = read(fd, &buf[i], sizeof(char));
-		if (res == -1) {
-			printf("read failed\n");
-			exit(-1);
-		}
-	} while(buf[i++] != '\0');
-	
-	printf("> %s\n", buf);
-    printf("read %d bytes\n", i);
+	  llread(fd, buf);
+
 
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
       perror("tcsetattr");

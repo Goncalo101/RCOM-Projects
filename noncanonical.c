@@ -8,13 +8,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "connection.h"
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
 
+
 volatile int STOP=FALSE;
+
+
+int (*func_ptr[])(int) = {send_set, send_ack};
 
 int main(int argc, char** argv)
 {
@@ -22,9 +27,9 @@ int main(int argc, char** argv)
     struct termios oldtio,newtio;
     char buf[255];
 
-    if ( (argc < 2) || 
-  	     ((strcmp("/dev/ttyS0", argv[1])!=0) && 
-  	      (strcmp("/dev/ttyS4", argv[1])!=0) )) {
+    if ( (argc < 3) || 
+         ((strcmp("/dev/ttyS0", argv[1])!=0) && 
+          (strcmp("/dev/ttyS4", argv[1])!=0) )) {
       printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
       exit(1);
     }
@@ -72,37 +77,18 @@ int main(int argc, char** argv)
     }
 
     printf("New termios structure set\n");
-	
-  	bzero(buf, strlen(buf));
+  
+    bzero(buf, strlen(buf));
 
-  	int i = 0;
-  	do {
-  		res = read(fd, &buf[i], sizeof(char));
-  		if (res == -1) {
-  			printf("read failed\n");
-  			exit(-1);
-  		}
-  	} while(buf[i++] != '\0');
-  	
-  	printf("> %s\n", buf);
-    printf("read %d bytes\n", i);
 
 
     // Reenvio
 
     size_t string_length = strlen(buf);
-    int nbytes = 0;
-    for (; nbytes <= string_length; ++nbytes)
-    {
-      res = write(fd, &buf[nbytes], sizeof(char));
-      if (res == -1) {
-        printf("write failed\n");
-        exit(-1);
-      }
-    }
 
-    printf("< %s\n", buf);
-    printf("wrote %d bytes\n", nbytes);
+
+    (*func_ptr[atoi(argv[2])])(fd);
+    
   	
 
   /* 
