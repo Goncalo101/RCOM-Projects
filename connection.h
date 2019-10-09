@@ -9,7 +9,7 @@
 #define RECEIVER_ANS SENDER_CMD
 #define SET_CMD 0x03
 #define UACK_CMD 0x07
-#define BCC 0
+#define BCC(CMD) FLAG ^ CMD
 
 int llread(int fd, char* buffer); 
 

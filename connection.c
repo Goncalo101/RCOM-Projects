@@ -43,7 +43,7 @@ int llwrite(int fd, char* buffer, int length){
 int send_set(int fd){
   char set_sequence[5+1];
 
-  sprintf(set_sequence, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, BCC, FLAG);
+  sprintf(set_sequence, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, BCC(SET_CMD), FLAG);
 
   int bytes_written = llwrite(fd, set_sequence, 6);
   if(bytes_written == -1) return bytes_written;
@@ -61,7 +61,7 @@ int send_ack(int fd){
   if(bytes_read == -1) return bytes_read;
 
 
-  sprintf(set_sequence, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, BCC, FLAG);
+  sprintf(set_sequence, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, BCC(UACK_CMD), FLAG);
 
   int bytes_written = llwrite(fd, set_sequence, 6);
   if(bytes_written == -1) return bytes_written;
