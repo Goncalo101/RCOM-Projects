@@ -11,6 +11,11 @@
 #define UACK_CMD 0x07
 #define BCC(CMD) FLAG ^ CMD
 
+#define TIMEOUT 3
+#define MAX_ATTEMPTS 3
+
+#define TYPE_A_PACKET_LENGTH 6
+
 int llread(int fd, char* buffer); 
 
 int llwrite(int fd, char* buffer, int length);

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 #include "connection.h"
 
@@ -19,6 +20,10 @@
 volatile int STOP=FALSE;
 
 typedef int (*func_ptr)(int);
+
+void alarm_handler() {
+	printf("entrou\n");
+}
 
 int main(int argc, char** argv)
 {
@@ -33,7 +38,9 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-
+	struct sigaction action;
+	action.sa_handler = alarm_handler;
+	sigaction(SIGALRM, &action, NULL);	
   /*
     Open serial port device for reading and writing and not as controlling tty
     because we don't want to get killed if linenoise sends CTRL-C.
