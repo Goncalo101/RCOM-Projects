@@ -13,8 +13,9 @@ int llread(int fd, char* buffer){
   			printf("read failed\n");
   			return -1;
   		}
+		printf("read hex: 0x%x ascii:%u\n", buffer[nbytes], buffer[nbytes]);
   	} while(buffer[nbytes++] != '\0');
-	printf("> %s\n", buffer);
+  	printf("> %s\n", buffer);
 	printf("read %d bytes\n", nbytes);
 
   	return nbytes;
@@ -30,6 +31,7 @@ int llwrite(int fd, char* buffer, int length){
         printf("write failed\n");
         return -1;
       }
+      printf("wrote hex: 0x%x ascii:%u\n", buffer[nbytes], buffer[nbytes]);
     }
 	printf("< %s\n", buffer);
     printf("wrote %d bytes\n", nbytes);
