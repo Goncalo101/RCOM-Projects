@@ -18,8 +18,7 @@
 
 volatile int STOP=FALSE;
 
-
-int (*func_ptr[])(int) = {send_set, send_ack};
+typedef int (*func_ptr)(int);
 
 int main(int argc, char** argv)
 {
@@ -78,16 +77,17 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
   
+	func_ptr functions[] = {send_set, send_ack};
+
+	int mode = atoi(argv[2]);
+
     bzero(buf, strlen(buf));
-
-
 
     // Reenvio
 
     size_t string_length = strlen(buf);
 
-
-    (*func_ptr[atoi(argv[2])])(fd);
+    functions[mode](fd);
     
   	
 
