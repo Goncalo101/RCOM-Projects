@@ -88,6 +88,7 @@ int llread2(int fd, char* buffer){
 
 		accept = state_machine(buffer[nbytes]);
 		printf("read hex: 0x%x ascii:%u\n", buffer[nbytes], buffer[nbytes]);
+		nbytes++;
   	} while (!accept);
   	
   	printf("> %s\n", buffer);
@@ -116,7 +117,7 @@ int llwrite(int fd, char* buffer, int length){
 }
 
 int send_set(int fd){
-  char set_sequence[5+1];
+  char set_sequence[TYPE_A_PACKET_LENGTH];
 
   sprintf(set_sequence, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, BCC(SENDER_CMD, SET_CMD), FLAG);
 
