@@ -60,14 +60,14 @@ int state_machine(char rec_byte) {
 			else state = START;
 			break;
 		case BCC_OK:
-			if (rec_byte == FLAG) state = MACHINE_STOP;
+			if (rec_byte == FLAG) {
+        state = MACHINE_STOP;
+        return 1;
+      }
 			else state = START;
-			break;
-		case MACHINE_STOP:
-			return 1;
-		default:return -1;
+      break;
+    default: return -1;
 	}
-
 	return 0;
 }
 
