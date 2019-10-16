@@ -16,6 +16,9 @@
 
 #define TYPE_A_PACKET_LENGTH 5
 
+#define BAUDRATE B38400
+
+
 typedef enum {
 	SET_RET,
 	UACK_RET,
@@ -31,9 +34,13 @@ typedef enum {
 	MACHINE_STOP 
 } machine_state;
 
+typedef int (*func_ptr)(int);
+
 int llread(int fd, char* buffer); 
 
 int llwrite(int fd, char* buffer, int length);
+
+int llopen(int porta, int mode);
 
 int send_set(int fd);
 
