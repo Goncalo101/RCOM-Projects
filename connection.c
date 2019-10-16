@@ -29,7 +29,14 @@ int llread(int fd, char* buffer){
   	return nbytes;
 }
 
+machine_state_ret check_cmd(char rec_cmd){
+	if(rec_cmd == SET_CMD) return SET_RET;
+	else if(rec_cmd == UACK_CMD) return UACK_RET;
+	else return FAIL;
+}
+
 int state_machine(char rec_byte) {
+	machine_state_ret state_ret;
 	static machine_state state = START;
 	static int addr = 0, cmd = 0;
 
@@ -48,8 +55,9 @@ int state_machine(char rec_byte) {
 			} else state = START;
 			break;
 		case A_RCV:
+			state_ret = check_cmd(rec_byte);
 			if (rec_byte == FLAG) state = FLAG_RCV;
-			else if (rec_byte == SET_CMD) {
+			else if (state_ret != FAIL) {
 				state = C_RCV;
 				cmd = rec_byte;
 			} else state = START;
@@ -130,6 +138,8 @@ int send_set(int fd){
   do {
 	alarm(TIMEOUT);  
 	bytes_read = llread2(fd, ack_sequence);
+  //TODO: VERIFICAR SE RECEBEU O ACK_CMD
+
 	if (bytes_read != -2) break;
   } while(count++ < MAX_ATTEMPTS && bytes_read < 0);
   
@@ -143,6 +153,7 @@ int send_ack(int fd){
 
   int bytes_read = llread2(fd, set_sequence);
   if(bytes_read == -1) return bytes_read;
+  //TODO: VERIFICAR SE RECEBEU O SET_CMD
 
 
   sprintf(set_sequence, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, BCC(RECEIVER_ANS, UACK_CMD), FLAG);

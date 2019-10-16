@@ -17,6 +17,12 @@
 #define TYPE_A_PACKET_LENGTH 5
 
 typedef enum {
+	SET_RET,
+	UACK_RET,
+	FAIL
+} machine_state_ret;
+
+typedef enum {
 	START,
 	FLAG_RCV,
 	A_RCV,
