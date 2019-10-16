@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     int mode = atoi(argv[2]);
     fd = llopen(atoi(argv[1]), mode);
 
-    
+    if(llclose(fd) != 0) exit(-1);
 
 
 
@@ -64,6 +64,5 @@ int main(int argc, char** argv)
     O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o 
   */
 
-    close(fd);
     return 0;
 }

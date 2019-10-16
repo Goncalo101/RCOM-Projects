@@ -12,6 +12,10 @@
 
 
 
+struct termios oldtio;
+
+
+
 
 int llread(int fd, char* buffer){
 	int nbytes = 0, res;
@@ -40,7 +44,7 @@ int llread(int fd, char* buffer){
 int llopen(int port, int mode){
 	func_ptr functions[] = {send_set, send_ack};
 	char dev[20];
-	struct termios oldtio,newtio;
+	struct termios newtio;
 
 
 
@@ -83,11 +87,16 @@ int llopen(int port, int mode){
 
 	if(func_ret != 0) return -1;
 
-
-    tcsetattr(fd,TCSANOW,&oldtio);
-
-
 	return fd;
+}
+
+int llclose(int fd) {
+    if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+      perror("tcsetattr");
+      return -1;
+    }
+
+	return close(fd);
 }
 
 machine_state_ret check_cmd(char rec_cmd){

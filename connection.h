@@ -40,7 +40,9 @@ int llread(int fd, char* buffer);
 
 int llwrite(int fd, char* buffer, int length);
 
-int llopen(int porta, int mode);
+int llopen(int port, int mode);
+
+int llclose(int fd);
 
 int send_set(int fd);
 
