@@ -10,36 +10,7 @@
 #include <stdlib.h>
 #include <termios.h>
 
-
-
 struct termios oldtio;
-
-
-
-
-int llread(int fd, char* buffer){
-	int nbytes = 0, res;
-	
-	bzero(buffer, strlen(buffer));
-	do {
-		res = read(fd, &buffer[nbytes], sizeof(char));
-		printf("cenas\n");
-		if (res == -1) {
-			if (errno == EINTR) {
-				printf("read timeout\n");
-				return -2;
-			}
-			printf("read failed\n");
-			return -1;
-		}
-		printf("read hex: 0x%x ascii:%u\n", buffer[nbytes], buffer[nbytes]);
-	} while(buffer[nbytes++] != '\0');
-
-	printf("> %s\n", buffer);
-	printf("read %d bytes\n", nbytes);
-
-	return nbytes;
-}
 
 int llopen(int port, int mode){
 	func_ptr functions[] = {send_set, send_ack};
@@ -149,7 +120,7 @@ int state_machine(char rec_byte) {
 	return 0;
 }
 
-int llread2(int fd, char* buffer){
+int llread(int fd, char* buffer){
 	int nbytes = 0, accept = 0, res;
 	
 	bzero(buffer, strlen(buffer));
@@ -194,6 +165,41 @@ int llwrite(int fd, char* buffer, int length){
 	return nbytes;
 }
 
+int send_file(int fd, char* filename) {
+	int file_desc = open(filename, O_RDONLY);
+	
+	if (file_desc == -1) {
+		perror("Unable to open file");
+		return -1;	
+	}
+	
+	struct stat file_stat;
+	fstat(file_desc, &file_stat);
+
+	char size_param[SIZE_LENGTH];
+	sprintf(size_param, "%c%c%lu", FILE_SIZE_PARAM, sizeof(off_t), file_stat.st_size);
+	printf("size: %lx\n", file_stat.st_size);
+	for (int i = 0; i < SIZE_LENGTH; ++i) {
+		printf("0x%x\n", strlen(size_param));
+	}
+printf("--------\n");
+
+	char *filename_param = malloc(strlen(filename) + 2);
+	sprintf(filename_param, "%c%c%s", FILE_NAME_PARAM, strlen(filename), filename);
+	
+	char start_packet[] = {START_PACKET, '\0'};
+	strcat(start_packet, size_param);
+	for (int i = 0; i < strlen(start_packet); ++i) {
+		printf("0x%x\n", start_packet[i]);
+	}
+	strcat(start_packet, filename_param);
+	// sprintf(start_packet, "%c%s%s", START_PACKET, size_param, filename_param);
+
+	// free(filename_param);
+
+	llwrite(fd, start_packet, strlen(start_packet));
+}
+
 int send_set(int fd){
 	char set_sequence[TYPE_A_PACKET_LENGTH];
 
@@ -207,13 +213,15 @@ int send_set(int fd){
 
 	do {
 		alarm(TIMEOUT);  
-		bytes_read = llread2(fd, ack_sequence);
-  //TODO: VERIFICAR SE RECEBEU O ACK_CMD
+		bytes_read = llread(fd, ack_sequence);
+	    //TODO: VERIFICAR SE RECEBEU O ACK_CMD
 
 		if (bytes_read != -2) break;
 	} while(count++ < MAX_ATTEMPTS && bytes_read < 0);
 
 	alarm(0);
+
+send_file(fd, "pinguim.gif");
 
 	return 0;
 }
@@ -221,7 +229,7 @@ int send_set(int fd){
 int send_ack(int fd){
 	char set_sequence[TYPE_A_PACKET_LENGTH];
 
-	int bytes_read = llread2(fd, set_sequence);
+	int bytes_read = llread(fd, set_sequence);
 	if(bytes_read == -1) return bytes_read;
   	//TODO: VERIFICAR SE RECEBEU O SET_CMD
 
