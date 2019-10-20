@@ -20,6 +20,8 @@
 #define START_PACKET 0x02
 #define END_PACKET 0x03
 
+#define L1 0x02
+
 #define TYPE_A_PACKET_LENGTH 5
 
 #define BAUDRATE B38400
