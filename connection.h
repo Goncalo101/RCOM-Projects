@@ -19,8 +19,7 @@
 #define FILE_NAME_PARAM 0x01
 #define START_PACKET 0x02
 #define END_PACKET 0x03
-
-#define L1 0x02
+#define START_PACKET_LENGTH 11
 
 #define TYPE_A_PACKET_LENGTH 5
 
