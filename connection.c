@@ -172,7 +172,10 @@ int llwrite(int fd, char *buffer, int length) {
 }
 
 int send_file(int fd, char *filename) {
+	// open serial port for reading
   int file_desc = open(filename, O_RDONLY);
+
+	// open file to be sent
   int filename_len = strlen(filename);
 
   if (file_desc == -1) {
@@ -180,53 +183,32 @@ int send_file(int fd, char *filename) {
     return -1;
   }
 
+	// use stat to find the length of the file
   struct stat file_stat;
-  fstat(file_desc, &file_stat);
-  off_t sizeFile = file_stat.st_size;
+  if (fstat(file_desc, &file_stat) == -1) {
+	  perror("Unable to stat file");
+  }
+
+  off_t file_size = file_stat.st_size;
 
   printf("TAMANHO: %d 0x%x\n", file_stat.st_size, file_stat.st_size);
 
-  int total_size = 7 * sizeof(unsigned char) + filename_len;
-  unsigned char *start_packet = malloc(total_size);
+  unsigned char start_packet[START_PACKET_LENGTH], file_size_buf[8];
+	sprintf(start_packet, "%c%c%c", START_PACKET, FILE_SIZE_PARAM, sizeof(off_t));
 
-  start_packet[0] = START_PACKET;    // C
-  start_packet[1] = FILE_SIZE_PARAM; // T1
-  start_packet[2] = L1;              // L1
-  start_packet[3] = sizeFile >> 8;   // V1
-  start_packet[4] = sizeFile;        // V1
-  start_packet[5] = FILE_NAME_PARAM; // T2
-  start_packet[6] = filename_len;    // L2
+	off_t mask = 0xff;
 
-  for (int i = 0; i < filename_len; i++) // V2 (NOME DO FICHEIRO)
-    start_packet[7 + i] = filename[i];
+	for (int i = 7; i >= 0; --i) {
+		file_size_buf[7-i] = mask & file_size >> (8*i);
+	}
 
-  for (int i = 0; i < total_size; i++)
-    printf("start_packet[%d]:   0x%x\n", i, start_packet[i]);
+	memcpy(&start_packet[3], file_size_buf, 8);
 
-  printf("Nome ficheiro: %s\n", &start_packet[7]);
+	for (int i = 0; i < 11; ++i) {
+		printf("start_packet[%d]: 0x%02x\n", i, start_packet[i]);
+	}
 
-  /*
-char size_param[SIZE_LENGTH];
-sprintf(size_param, "%c%c%lu", FILE_SIZE_PARAM, sizeof(off_t),
-file_stat.st_size); printf("size: %lx\n", file_stat.st_size); for (int i = 0; i
-< SIZE_LENGTH; ++i) { printf("0x%x\n", strlen(size_param));
-}
-printf("--------\n");
-
-char *filename_param = malloc(strlen(filename) + 2);
-sprintf(filename_param, "%c%c%s", FILE_NAME_PARAM, strlen(filename), filename);
-
-char start_packet[] = {START_PACKET, '\0'};
-strcat(start_packet, size_param);
-for (int i = 0; i < strlen(start_packet); ++i) {
-printf("0x%x\n", start_packet[i]);
-}
-strcat(start_packet, filename_param);
-// sprintf(start_packet, "%c%s%s", START_PACKET, size_param, filename_param);
-*/
-  // free(filename_param);
-
-  llwrite(fd, start_packet, strlen(start_packet));
+  llwrite(fd, start_packet, START_PACKET_LENGTH);
 }
 
 int send_set(int fd) {
