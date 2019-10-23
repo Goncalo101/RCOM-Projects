@@ -44,7 +44,7 @@ int state_machine(char rec_byte) {
   case C_RCV:
     if (rec_byte == FLAG)
       state = FLAG_RCV;
-    else if (rec_byte == BCC(addr, cmd))
+    else if (rec_byte == (BCC(addr, cmd)))
       state = BCC_OK;
     else
       state = START;

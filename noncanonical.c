@@ -25,9 +25,7 @@ void alarm_handler() {
 
 int main(int argc, char** argv)
 {
-    int fd,c, res;
-    
-    char buf[255];
+    int fd;
 
     /*if ( (argc < 3) || 
          ((strcmp("/dev/ttyS0", argv[1])!=0) && 

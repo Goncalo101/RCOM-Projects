@@ -118,8 +118,6 @@ int send_file(int fd, char *filename) {
   int file_desc = open(filename, O_RDONLY);
 
 	// open file to be sent
-  int filename_len = strlen(filename);
-
   if (file_desc == -1) {
     perror("Unable to open file");
     return -1;
@@ -133,10 +131,8 @@ int send_file(int fd, char *filename) {
 
   off_t file_size = file_stat.st_size;
 
-  printf("TAMANHO: %d 0x%x\n", file_stat.st_size, file_stat.st_size);
-
-  unsigned char start_packet[START_PACKET_LENGTH], file_size_buf[8];
-	sprintf(start_packet, "%c%c%c", START_PACKET, FILE_SIZE_PARAM, sizeof(off_t));
+  char start_packet[START_PACKET_LENGTH], file_size_buf[8];
+	sprintf(start_packet, "%c%c%ld", START_PACKET, FILE_SIZE_PARAM, sizeof(off_t));
 
 	off_t mask = 0xff;
 
@@ -150,20 +146,20 @@ int send_file(int fd, char *filename) {
 		printf("start_packet[%d]: 0x%02x\n", i, start_packet[i]);
 	}
 
-  llwrite(fd, start_packet, START_PACKET_LENGTH);
+  return llwrite(fd, start_packet, START_PACKET_LENGTH);
 }
 
 int send_set(int fd) {
-  char set_sequence[TYPE_A_PACKET_LENGTH];
+  char set_sequence[TYPE_A_PACKET_LENGTH+1];
 
   sprintf(set_sequence, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD,
           BCC(SENDER_CMD, SET_CMD), FLAG);
 
-  int bytes_written = llwrite(fd, set_sequence, TYPE_A_PACKET_LENGTH);
+  int bytes_written = llwrite(fd, set_sequence, TYPE_A_PACKET_LENGTH+1);
   if (bytes_written == -1)
     return bytes_written;
 
-  char ack_sequence[TYPE_A_PACKET_LENGTH];
+  char ack_sequence[TYPE_A_PACKET_LENGTH+1];
   int count = 0, bytes_read;
 
   do {
@@ -183,7 +179,7 @@ int send_set(int fd) {
 }
 
 int send_ack(int fd) {
-  char set_sequence[TYPE_A_PACKET_LENGTH];
+  char set_sequence[TYPE_A_PACKET_LENGTH+1];
 
   int bytes_read = llread(fd, set_sequence);
   if (bytes_read == -1)
