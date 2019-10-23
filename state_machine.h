@@ -5,7 +5,7 @@ typedef enum {
 	SET_RET,
 	UACK_RET,
 	FAIL
-} machine_state_ret;
+} machine_ret;
 
 typedef enum {
 	START,
@@ -17,5 +17,6 @@ typedef enum {
 } machine_state;
 
 int state_machine(char rec_byte);
+machine_ret get_machine_ret();
 
 #endif

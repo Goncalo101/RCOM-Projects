@@ -150,10 +150,7 @@ int send_file(int fd, char *filename) {
 }
 
 int send_set(int fd) {
-  char set_sequence[TYPE_A_PACKET_LENGTH+1];
-
-  sprintf(set_sequence, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD,
-          BCC(SENDER_CMD, SET_CMD), FLAG);
+  char *set_sequence = build_packet(SENDER_CMD, SET_CMD, NULL);
 
   int bytes_written = llwrite(fd, set_sequence, TYPE_A_PACKET_LENGTH+1);
   if (bytes_written == -1)
@@ -186,12 +183,19 @@ int send_ack(int fd) {
     return bytes_read;
   // TODO: VERIFICAR SE RECEBEU O SET_CMD
 
-  sprintf(set_sequence, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD,
-          BCC(RECEIVER_ANS, UACK_CMD), FLAG);
+  char *ack_sequence = build_packet(RECEIVER_ANS, UACK_CMD, NULL);
 
-  int bytes_written = llwrite(fd, set_sequence, TYPE_A_PACKET_LENGTH);
+  int bytes_written = llwrite(fd, ack_sequence, TYPE_A_PACKET_LENGTH);
   if (bytes_written == -1)
     return bytes_written;
 
   return 0;
+}
+
+char* build_packet(char address, char control, char *data) {
+  char* packet = malloc(TYPE_A_PACKET_LENGTH + 1);
+
+  sprintf(packet, "%c%c%c%c%c", FLAG, address, control, BCC(address, control), FLAG);
+
+  return packet;
 }

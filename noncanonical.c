@@ -42,8 +42,6 @@ int main(int argc, char** argv)
     because we don't want to get killed if linenoise sends CTRL-C.
   */
 
-
-
   /* 
     VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
     leitura do(s) pr�ximo(s) caracter(es)
@@ -53,8 +51,6 @@ int main(int argc, char** argv)
     fd = llopen(atoi(argv[1]), mode);
 
     if(llclose(fd) != 0) exit(-1);
-
-
 
     // Reenvio  	
 

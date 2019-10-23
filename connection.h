@@ -32,4 +32,6 @@ int send_set(int fd);
 
 int send_ack(int fd);
 
+char* build_packet(char address, char control, char *data);
+
 #endif 

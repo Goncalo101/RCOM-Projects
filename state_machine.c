@@ -1,7 +1,10 @@
 #include "state_machine.h"
 #include "flags.h"
 
-machine_state_ret check_cmd(char rec_cmd) {
+static machine_state state = START;
+static machine_ret mach_ret;
+
+machine_ret check_cmd(char rec_cmd) {
   if (rec_cmd == SET_CMD)
     return SET_RET;
   else if (rec_cmd == UACK_CMD)
@@ -11,8 +14,7 @@ machine_state_ret check_cmd(char rec_cmd) {
 }
 
 int state_machine(char rec_byte) {
-  machine_state_ret state_ret;
-  static machine_state state = START;
+  machine_ret mach_ret;
   static int addr = 0, cmd = 0;
 
   switch (state) {
@@ -32,10 +34,10 @@ int state_machine(char rec_byte) {
       state = START;
     break;
   case A_RCV:
-    state_ret = check_cmd(rec_byte);
+    mach_ret = check_cmd(rec_byte);
     if (rec_byte == FLAG)
       state = FLAG_RCV;
-    else if (state_ret != FAIL) {
+    else if (mach_ret != FAIL) {
       state = C_RCV;
       cmd = rec_byte;
     } else
@@ -60,4 +62,8 @@ int state_machine(char rec_byte) {
     return -1;
   }
   return 0;
+}
+
+machine_ret get_machine_ret() {
+    return mach_ret;
 }
