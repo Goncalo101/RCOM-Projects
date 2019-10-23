@@ -75,6 +75,9 @@ int llread(int fd, char *buffer) {
 
   bzero(buffer, strlen(buffer));
   do {
+    if(nbytes >= 64){
+      buffer = realloc(buffer ,64);
+    }
     res = read(fd, &buffer[nbytes], sizeof(char));
     if (res == -1) {
       if (errno == EINTR) {
@@ -111,6 +114,15 @@ int llwrite(int fd, char *buffer, int length) {
   printf("wrote %d bytes\n", nbytes);
 
   return nbytes;
+}
+
+int receive_file(int fd){
+  char *to_read = malloc(PACKET_SIZE);
+  while(llread(fd,to_read)){
+    if
+  }
+
+
 }
 
 int send_file(int fd, char *filename) {
@@ -164,11 +176,10 @@ int send_set(int fd) {
   do {
     alarm(TIMEOUT);
     bytes_read = llread(fd, ack_sequence);
-    // TODO: VERIFICAR SE RECEBEU O ACK_CMD
 
     if (bytes_read != -2)
       break;
-  } while (count++ < MAX_ATTEMPTS && bytes_read < 0);
+  } while (count++ < MAX_ATTEMPTS && bytes_read < 0 && ack_sequence[2] != UACK_CMD);
 
   alarm(0);
 
@@ -180,10 +191,13 @@ int send_set(int fd) {
 int send_ack(int fd) {
   char set_sequence[TYPE_A_PACKET_LENGTH+1];
 
+  do {
   int bytes_read = llread(fd, set_sequence);
   if (bytes_read == -1)
     return bytes_read;
-  // TODO: VERIFICAR SE RECEBEU O SET_CMD
+  }while(set_sequence[2] != SET_CMD);
+
+  
 
   char *ack_sequence = build_packet(RECEIVER_ANS, UACK_CMD, NULL);
 
