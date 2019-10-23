@@ -7,11 +7,6 @@
 #define TIMEOUT 3
 #define MAX_ATTEMPTS 3
 
-#define SIZE_LENGTH 8
-#define FILE_SIZE_PARAM 0x00
-#define FILE_NAME_PARAM 0x01
-#define START_PACKET 0x02
-#define END_PACKET 0x03
 #define START_PACKET_LENGTH 11
 
 #define TYPE_A_PACKET_LENGTH 5

@@ -13,7 +13,14 @@ typedef enum {
 	A_RCV,
 	C_RCV,
 	BCC_OK,
-	MACHINE_STOP 
+	PACK_CTRL,
+	TYPE_FIELD,
+	LENGTH_FIELD,
+	VALUE_FIELD,
+	CHECK_INTERMEDIATE,
+	SEQUENCE_NO,
+	MACHINE_STOP
+
 } machine_state;
 
 int state_machine(char rec_byte);

@@ -135,7 +135,7 @@ int send_file(int fd, char *filename) {
 	sprintf(start_packet, "%c%c%ld", START_PACKET, FILE_SIZE_PARAM, sizeof(off_t));
 
 	off_t mask = 0xff;
-
+  
 	for (int i = 7; i >= 0; --i) {
 		file_size_buf[7-i] = mask & file_size >> (8*i);
 	}
