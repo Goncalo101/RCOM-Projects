@@ -135,7 +135,7 @@ int send_file(int fd, char *filename) {
 	sprintf(start_packet, "%c%c%ld", START_PACKET, FILE_SIZE_PARAM, sizeof(off_t));
 
 	off_t mask = 0xff;
-  
+
 	for (int i = 7; i >= 0; --i) {
 		file_size_buf[7-i] = mask & file_size >> (8*i);
 	}
@@ -146,7 +146,9 @@ int send_file(int fd, char *filename) {
 		printf("start_packet[%d]: 0x%02x\n", i, start_packet[i]);
 	}
 
-  return llwrite(fd, start_packet, START_PACKET_LENGTH);
+  char *to_send = build_packet(SENDER_CMD, 0, start_packet);
+
+  return llwrite(fd, to_send, 5+11+1);
 }
 
 int send_set(int fd) {
@@ -185,7 +187,9 @@ int send_ack(int fd) {
 
   char *ack_sequence = build_packet(RECEIVER_ANS, UACK_CMD, NULL);
 
-  int bytes_written = llwrite(fd, ack_sequence, TYPE_A_PACKET_LENGTH);
+  if(ack_sequence == NULL) return -1;
+
+  int bytes_written = llwrite(fd, ack_sequence, TYPE_A_PACKET_LENGTH+1);
   if (bytes_written == -1)
     return bytes_written;
 
@@ -193,9 +197,23 @@ int send_ack(int fd) {
 }
 
 char* build_packet(char address, char control, char *data) {
-  char* packet = malloc(TYPE_A_PACKET_LENGTH + 1);
+  size_t mem_size = TYPE_A_PACKET_LENGTH;
+  char* packet;
+  if(data != NULL) {
+    mem_size += 11;
+    packet = malloc(mem_size + 1);
 
-  sprintf(packet, "%c%c%c%c%c", FLAG, address, control, BCC(address, control), FLAG);
+    sprintf(packet, "%c%c%c%c", FLAG, address, control, BCC(address, control));
+    memcpy(&packet[5], data, 11);
+    sprintf(&packet[5+11], "%c", FLAG);
+
+  } else {
+    packet = malloc(mem_size + 1);
+
+    sprintf(packet, "%c%c%c%c%c", FLAG, address, control, BCC(address, control), FLAG);
+
+  }
+
 
   return packet;
 }
