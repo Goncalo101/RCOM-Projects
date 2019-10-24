@@ -138,13 +138,16 @@ int receive_file(int fd) {
   char *to_read = malloc(PACKET_SIZE);
   int nbytes;
 
-  int pinguim = open("pinguim1.gif", O_WRONLY | O_CREAT);
+  int pinguim = open("pinguim1.gif", O_WRONLY | O_CREAT, 0777);
 
   while ((nbytes = llread(fd, to_read))) {
-    int packet_num = process_msg(to_read, packet, nbytes); 
-    int written = write(pinguim, packet[0].data, nbytes - 6 - 4*packet_num);
+	printf("CHAR: 0x%x\n", to_read[0]);
+    int packet_num = process_msg(to_read, packet, nbytes);
+	int written = write(pinguim, packet[0].data, nbytes - 6 - 4 * packet_num + packet[0].oct_num);
+	perror("ERRO");
+	printf("ERRNO %d\n", errno);
 
-    printf("wrote %d bytes on receive_file", written);
+	printf("wrote %d bytes on receive_file", written);
   }
 }
 
@@ -167,8 +170,8 @@ int send_file(int fd, char *filename) {
   off_t file_size = file_stat.st_size;
 
   char start_packet[START_PACKET_LENGTH], file_size_buf[8];
-  sprintf(start_packet, "%c%c%ld", START_PACKET, FILE_SIZE_PARAM,
-          sizeof(off_t));
+  sprintf(start_packet, "%c%c%c", START_PACKET, FILE_SIZE_PARAM,
+          8);
 
   off_t mask = 0xff;
 
@@ -178,6 +181,7 @@ int send_file(int fd, char *filename) {
 
   memcpy(&start_packet[3], file_size_buf, 8);
 
+printf("size: asdasdasdasd %lu\n", sizeof(off_t));
   for (int i = 0; i < 11; ++i) {
     printf("start_packet[%d]: 0x%02x\n", i, start_packet[i]);
   }
@@ -227,7 +231,7 @@ int send_ack(int fd) {
   if (ack_sequence == NULL)
     return -1;
 
-  int bytes_written = llwrite(fd, ack_sequence, TYPE_A_PACKET_LENGTH + 1);
+  int bytes_written = llwrite(fd, ack_sequence, TYPE_A_PACKET_LENGTH);
   if (bytes_written == -1)
     return bytes_written;
   
@@ -244,7 +248,7 @@ char *build_packet(char address, char control, char *data) {
     packet = malloc(mem_size + 1);
 
     sprintf(packet, "%c%c%c%c", FLAG, address, control, BCC(address, control));
-    memcpy(&packet[5], data, 11);
+    memcpy(&packet[4], data, 11);
     sprintf(&packet[5 + 11], "%c", FLAG);
 
   } else {

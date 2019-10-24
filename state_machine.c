@@ -2,35 +2,23 @@
 #include "flags.h"
 
 #include <limits.h>
+#include <stdio.h>
 
 static machine_state state = START;
 static machine_ret mach_ret;
 
 machine_ret check_cmd(char rec_cmd) {
-  if (rec_cmd == SET_CMD)
+  if (rec_cmd == SET_CMD || rec_cmd == 0x00 || rec_cmd == 0x0b || rec_cmd == 0x07 || rec_cmd == 0x05 || rec_cmd == 0x85 || rec_cmd == 0x01 || rec_cmd == 0x81)
     return SET_RET;
-  else if (rec_cmd == UACK_CMD)
-    return UACK_RET;
-  else
-    return FAIL;
+  return FAIL;
 }
 
 int sub_machine(char rec_byte) {
-  static machine_state sub_machine_state = PACK_CTRL;
+  static machine_state sub_machine_state = TYPE_FIELD;
   static char counter = 0;
-  static char tlv_counter = 2;
 
   switch (sub_machine_state) {
-  case PACK_CTRL:
-    if (rec_byte == START_PACKET || rec_byte == END_PACKET) {
-      sub_machine_state = TYPE_FIELD;
-      return 0;
-    }
-    break;
   case TYPE_FIELD:
-    if (tlv_counter <= 0) {
-      return 1;
-    }
     if (rec_byte == FILE_SIZE_PARAM || rec_byte == FILE_NAME_PARAM) {
       sub_machine_state = LENGTH_FIELD;
       --counter;
@@ -43,11 +31,12 @@ int sub_machine(char rec_byte) {
   case VALUE_FIELD:
     if (counter == 0) {
       sub_machine_state = TYPE_FIELD;
-      return 0;
+      return 1;
     }
     --counter;
     break;
   }
+  return -1;
 }
 
 int data_machine(char rec_byte) {
@@ -56,7 +45,7 @@ int data_machine(char rec_byte) {
   static char data_len_counter = 2;
   static char seq_no = 0;
   static char oct_len[2];
-  static int oct_num = 0, index = 0;
+  static int  oct_num = 0, index = 0;
 
   switch (sub_machine_state) {
   case PACK_DATA:
@@ -78,6 +67,13 @@ int data_machine(char rec_byte) {
     break;
   case PACKET:
     if (oct_num == 0) {
+      // RESET
+      sub_machine_state = PACK_DATA;
+      counter = 0;
+      data_len_counter = 2;
+      seq_no = 0;
+      oct_len[2];
+      oct_num = 0, index = 0;
       return 1;
     }
     --oct_num;
@@ -89,6 +85,8 @@ int data_machine(char rec_byte) {
 int state_machine(char rec_byte) {
   machine_ret mach_ret;
   static int addr = 0, cmd = 0;
+
+  printf("oi: %d\n", state);
 
   switch (state) {
   case START:
@@ -113,7 +111,7 @@ int state_machine(char rec_byte) {
     else if (mach_ret != FAIL) {
       state = C_RCV;
       cmd = rec_byte;
-    } else
+    } else if( rec_byte == SET_CMD)
       state = START;
     break;
   case C_RCV:
@@ -126,7 +124,8 @@ int state_machine(char rec_byte) {
     break;
   case BCC_OK:
     if (rec_byte == FLAG) {
-      state = MACHINE_STOP;
+      state = START;
+      addr = 0, cmd = 0;
       return 1;
     } else if (rec_byte == START_PACKET || rec_byte == END_PACKET)
       state = PACK_CTRL;
