@@ -14,6 +14,36 @@
 
 struct termios oldtio;
 
+void str_replace(char *target, const char *needle, const char *replacement)
+{
+  char buffer[1024] = {0};
+  char *insert_point = &buffer[0];
+  const char *tmp = target;
+  size_t needle_len = strlen(needle);
+  size_t repl_len = strlen(replacement);
+
+  while (1)
+  {
+    const char *p = strstr(tmp, needle);
+
+    if (p == NULL)
+    {
+      strcpy(insert_point, tmp);
+      break;
+    }
+
+    memcpy(insert_point, tmp, p - tmp);
+    insert_point += p - tmp;
+
+    memcpy(insert_point, replacement, repl_len);
+    insert_point += repl_len;
+
+    tmp = p + needle_len;
+  }
+
+  strcpy(target, buffer);
+}
+
 int llopen(int port, int mode) {
   func_ptr functions[] = {send_set, send_ack};
   char dev[20];
@@ -208,17 +238,27 @@ int send_file(int fd, char *filename) {
 
   // memcpy(&start_packet[3], file_size_buf, 8);
 
-  char *to_send;
+  
+
+  char to_send[64];
   char to_read[TYPE_A_PACKET_LENGTH+1];
   off_t index = 0;
   while(index < file_size){
+    read(file_desc, to_send, 64);
+    
+    char temp[128] = {ESCAPE, ESCAPE};
+    str_replace(to_send, ESCAPE, temp);
+
+    char temp[128] = {ESCAPE, FLAG};
+    str_replace(to_send, FLAG , temp);
+
     printf("INDEX: %d\n", index);
-    to_send = build_packet(SENDER_CMD, 0, start_packet);
+    //to_send = build_packet(SENDER_CMD, 0, start_packet);
     index += llwrite(fd, to_send, 5 + 11 + 1);
 
     llread(fd, to_read);
 
-    to_send = build_packet(SENDER_CMD, 1, start_packet);
+    //to_send = build_packet(SENDER_CMD, 1, start_packet);
     index += llwrite(fd, to_send, 5 + 11 + 1);
 
     llread(fd, to_read);
