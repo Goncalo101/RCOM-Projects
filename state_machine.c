@@ -1,6 +1,8 @@
 #include "state_machine.h"
 #include "flags.h"
 
+#include <limits.h>
+
 static machine_state state = START;
 static machine_ret mach_ret;
 
@@ -20,7 +22,7 @@ int sub_machine(char rec_byte) {
 
   switch (sub_machine_state) {
   case PACK_CTRL:
-    if (rec_byte == START_PACKET) {
+    if (rec_byte == START_PACKET || rec_byte == END_PACKET) {
       sub_machine_state = TYPE_FIELD;
       return 0;
     }
@@ -45,6 +47,42 @@ int sub_machine(char rec_byte) {
     }
     --counter;
     break;
+  }
+}
+
+int data_machine(char rec_byte) {
+  static machine_state sub_machine_state = PACK_DATA;
+  static char counter = 0;
+  static char data_len_counter = 2;
+  static char seq_no = 0;
+  static char oct_len[2];
+  static int oct_num = 0, index = 0;
+
+  switch (sub_machine_state) {
+  case PACK_DATA:
+    if (rec_byte == DATA_PACKET) {
+      state = SEQUENCE_NO;
+    }
+    break;
+  case SEQUENCE_NO:
+    seq_no = rec_byte;
+    state = OCT_LEN;
+    break;
+  case OCT_LEN:
+    if (data_len_counter == 0) {
+      oct_num = 256 * oct_len[0] + oct_len[1];
+      state = PACKET;
+    }
+    oct_len[2-data_len_counter] = rec_byte;
+    --data_len_counter;
+    break;
+  case PACKET:
+    if (oct_num == 0) {
+      return 1;
+    }
+    --oct_num;
+    break;
+  default: break;
   }
 }
 
@@ -90,7 +128,7 @@ int state_machine(char rec_byte) {
     if (rec_byte == FLAG) {
       state = MACHINE_STOP;
       return 1;
-    } else if (rec_byte == 0x02 || rec_byte == 0x03)
+    } else if (rec_byte == START_PACKET || rec_byte == END_PACKET)
       state = PACK_CTRL;
     else if (rec_byte == 0x01)
       state = SEQUENCE_NO;
@@ -105,10 +143,16 @@ int state_machine(char rec_byte) {
   case CHECK_INTERMEDIATE:
     if (rec_byte == ESCAPE)
       break;
+    else if (rec_byte == DATA_PACKET)
+      state = PACK_DATA;
+
     state = BCC_OK;
     // corrigir isso
     break;
-  case SEQUENCE_NO:
+  case PACK_DATA:
+    if (data_machine(rec_byte)) {
+      state = CHECK_INTERMEDIATE;
+    }
     break;
   default:
     return -1;

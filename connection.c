@@ -77,6 +77,7 @@ int llread(int fd, char *buffer) {
     if (nbytes >= 64) {
       buffer = realloc(buffer, 64);
     }
+    
     res = read(fd, &buffer[nbytes], sizeof(char));
     if (res == -1) {
       if (errno == EINTR) {
@@ -115,10 +116,35 @@ int llwrite(int fd, char *buffer, int length) {
   return nbytes;
 }
 
+int process_msg(char *to_read, packet_t packet[], int bytes_read) {
+  int p = 0;
+  for (int i = 4; i < bytes_read - 2; i += 5, ++p) {
+    packet[p].ctrl = to_read[i];
+    packet[p].seq_no = to_read[i + 1];
+    packet[p].oct_num = to_read[i + 2] * 256 + to_read[i + 3];
+    packet[p].data = malloc(packet[p].oct_num);
+    memcpy(packet[p].data, &to_read[i + 4], packet[p].oct_num);
+    
+    i += packet[p].oct_num;
+  }
+
+  printf("packet data %#04x\n", to_read[0]);
+
+  return p;
+}
+
 int receive_file(int fd) {
+  packet_t packet[5];
   char *to_read = malloc(PACKET_SIZE);
-  while (llread(fd, to_read)) {
-    // if
+  int nbytes;
+
+  int pinguim = open("pinguim1.gif", O_WRONLY | O_CREAT);
+
+  while ((nbytes = llread(fd, to_read))) {
+    int packet_num = process_msg(to_read, packet, nbytes); 
+    int written = write(pinguim, packet[0].data, nbytes - 6 - 4*packet_num);
+
+    printf("wrote %d bytes on receive_file", written);
   }
 }
 
@@ -204,6 +230,8 @@ int send_ack(int fd) {
   int bytes_written = llwrite(fd, ack_sequence, TYPE_A_PACKET_LENGTH + 1);
   if (bytes_written == -1)
     return bytes_written;
+  
+  receive_file(fd);
 
   return 0;
 }

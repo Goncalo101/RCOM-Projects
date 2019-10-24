@@ -15,11 +15,17 @@ typedef enum {
   VALUE_FIELD,
   CHECK_INTERMEDIATE,
   SEQUENCE_NO,
+  PACK_DATA,
+  OCT_LEN,
+  PACKET,
   MACHINE_STOP
-
 } machine_state;
 
+typedef struct packet {
+  char seq_no, oct_num, ctrl;
+  char *data;
+} packet_t;
+
 int state_machine(char rec_byte);
-machine_ret get_machine_ret();
 
 #endif
