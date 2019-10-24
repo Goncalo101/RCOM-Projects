@@ -8,7 +8,7 @@ static machine_state state = START;
 static machine_ret mach_ret;
 
 machine_ret check_cmd(char rec_cmd) {
-  if (rec_cmd == SET_CMD || rec_cmd == 0x00 || rec_cmd == 0x0b || rec_cmd == 0x07 || rec_cmd == 0x05 || rec_cmd == 0x85 || rec_cmd == 0x01 || rec_cmd == 0x81)
+  if (rec_cmd == SET_CMD || rec_cmd == 0x00 || rec_cmd == 0x0b || rec_cmd == 0x07 || rec_cmd == 0x05 || rec_cmd == 0xffffff85 || rec_cmd == 0x01 || rec_cmd == 0x81)
     return SET_RET;
   return FAIL;
 }
@@ -86,6 +86,8 @@ int state_machine(char rec_byte) {
   machine_ret mach_ret;
   static int addr = 0, cmd = 0;
 
+  printf("STATE: %d\n", state);
+
   switch (state) {
   case START:
     if (rec_byte == FLAG) {
@@ -104,6 +106,7 @@ int state_machine(char rec_byte) {
     break;
   case A_RCV:
     mach_ret = check_cmd(rec_byte);
+    printf("MACH RET: %d\n", mach_ret);
     if (rec_byte == FLAG)
       state = FLAG_RCV;
     else if (mach_ret != FAIL) {

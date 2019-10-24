@@ -77,7 +77,6 @@ int llread(int fd, char *buffer) {
     if (nbytes >= 64) {
       buffer = realloc(buffer, 64);
     }
-    
     res = read(fd, &buffer[nbytes], sizeof(char));
     if (res == -1) {
       if (errno == EINTR) {
@@ -136,23 +135,45 @@ int process_msg(char *to_read, packet_t packet[], int bytes_read) {
 int receive_file(int fd) {
   packet_t packet[5];
   char *to_read = malloc(PACKET_SIZE);
-  int nbytes;
+  int nbytes = 1;
   char file_size_buf[8];
   off_t file_size;
+  char *to_send;
 
   int pinguim = open("pinguim1.gif", O_WRONLY | O_CREAT, 0777);
+  int counter = 0;
+  char aux[] = {0x85, 0x05};
 
-  while ((nbytes = llread(fd, to_read))) {
+  while (1) {
+
+    nbytes = llread(fd, to_read);
+
+    if(to_read[5] == END_PACKET){
+      break;
+    }
+
     if (to_read[5] == 0x02 && to_read[3] == 0x00) {
       sscanf(&to_read[8], "%ld", &file_size);
-      printf("file size %ld\n", file_size);
+
+      to_send = build_packet(SENDER_CMD, aux[counter%2], NULL);
+      llwrite(fd, to_send, TYPE_A_PACKET_LENGTH + 1);
+      ++counter;
+
+      nbytes = llread(fd, to_read);
+      to_send = build_packet(SENDER_CMD, aux[counter % 2], NULL);
+      llwrite(fd, to_send, TYPE_A_PACKET_LENGTH + 1);
+      ++counter;
+
       continue;
-    }
-    
+    }    
+
     int packet_num = process_msg(to_read, packet, nbytes);
     int written = write(pinguim, packet[0].data, nbytes - 6 - 4 * packet_num + packet[0].oct_num);
     perror("ERRO");
     printf("ERRNO %d\n", errno);
+    to_send = build_packet(SENDER_CMD, aux[counter % 2], NULL);
+    llwrite(fd, to_send, TYPE_A_PACKET_LENGTH + 1);
+    ++counter;
 
     printf("wrote %d bytes on receive_file", written);
   }
@@ -187,9 +208,23 @@ int send_file(int fd, char *filename) {
 
   // memcpy(&start_packet[3], file_size_buf, 8);
 
-  char *to_send = build_packet(SENDER_CMD, 0, start_packet);
+  char *to_send;
+  char to_read[TYPE_A_PACKET_LENGTH+1];
+  off_t index = 0;
+  while(index < file_size){
+    printf("INDEX: %d\n", index);
+    to_send = build_packet(SENDER_CMD, 0, start_packet);
+    index += llwrite(fd, to_send, 5 + 11 + 1);
 
-  return llwrite(fd, to_send, 5 + 11 + 1);
+    llread(fd, to_read);
+
+    to_send = build_packet(SENDER_CMD, 1, start_packet);
+    index += llwrite(fd, to_send, 5 + 11 + 1);
+
+    llread(fd, to_read);
+  }
+
+  return 1;
 }
 
 int send_set(int fd) {
