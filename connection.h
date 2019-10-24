@@ -17,9 +17,9 @@
 
 typedef int (*func_ptr)(int);
 
-int llread(int fd, char* buffer); 
+int llread(int fd, char *buffer);
 
-int llwrite(int fd, char* buffer, int length);
+int llwrite(int fd, char *buffer, int length);
 
 int llopen(int port, int mode);
 
@@ -29,6 +29,6 @@ int send_set(int fd);
 
 int send_ack(int fd);
 
-char* build_packet(char address, char control, char *data);
+char *build_packet(char address, char control, char *data);
 
-#endif 
+#endif
