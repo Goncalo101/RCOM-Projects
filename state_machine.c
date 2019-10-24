@@ -86,8 +86,6 @@ int state_machine(char rec_byte) {
   machine_ret mach_ret;
   static int addr = 0, cmd = 0;
 
-  printf("oi: %d\n", state);
-
   switch (state) {
   case START:
     if (rec_byte == FLAG) {
