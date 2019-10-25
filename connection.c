@@ -246,10 +246,10 @@ int send_file(int fd, char *filename) {
   while(index < file_size){
     read(file_desc, to_send, 64);
     
-    char temp[128] = {ESCAPE, ESCAPE};
+    char temp[] = {ESCAPE, ESCAPE};
     str_replace(to_send, ESCAPE, temp);
 
-    char temp[128] = {ESCAPE, FLAG};
+    temp[1] = FLAG;
     str_replace(to_send, FLAG , temp);
 
     printf("INDEX: %d\n", index);
