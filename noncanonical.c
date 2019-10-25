@@ -33,10 +33,15 @@ int main(int argc, char **argv) {
   register_signal_handler();
 
   int mode = atoi(argv[2]), port = atoi(&argv[1][9]);
+  char *filename = malloc(strlen(argv[3]) + 1);
+  strcpy(filename, argv[3]);
 
-  start_app(port, mode, argv[3]);
+  start_app(port, mode, filename);
 
-  
+  func_ptr functions[] = {send_file, receive_file};
+  functions[mode](filename);
+
+  free(filename);
 
   // if (llclose(fd) != 0)
   //   exit(-1);
