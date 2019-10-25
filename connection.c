@@ -89,15 +89,19 @@ int calc_bcc2(char *packet, int length){
 
 char *build_frame(char *fragment, int addr, int ctrl, int *length){
     char *packet = build_packet(fragment, length);
-
     int bcc2 = calc_bcc2(packet, *length);
 
     char *frame = malloc(*length + FRAME_I_LENGTH + 1);
-    sprintf(frame, "%c%c%c%c%s%c%c", FLAG, addr, ctrl, BCC(addr, ctrl), packet, bcc2, FLAG);
+    sprintf(frame, "%c%c%c%c", FLAG, addr, ctrl, BCC(addr, ctrl));
+    memcpy(&frame[4], packet, *length);
+    sprintf(&frame[4 + (*length)], "%c%c", bcc2, FLAG);
+
+    return frame;
 }
 
 int send_packet(int fd, char *fragment, int addr, int ctrl, int length){
     char *frame = build_frame(fragment, addr, ctrl, &length);
+    printf("FRAME: %s\n", frame);
     
     return llwrite(fd, frame, length);
 }
