@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "utils/state_machine.h"
 #include "connection.h"
 #include "flags.h"
 
@@ -21,10 +22,17 @@ int send_set(int fd) {
     sprintf(set_command, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, bcc, FLAG);
 
     int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
-    return bytes_written;
+
+    char ack_command[TYPE_A_PACKET_LENGTH + 1];
+    int bytes_read = llread(fd, set_command);
+
+    return bytes_read;
 }
 
 int send_ack(int fd) {
+    char set_command[TYPE_A_PACKET_LENGTH + 1];
+    int bytes_read = llread(fd, set_command);
+
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(RECEIVER_ANS, UACK_CMD);
 
@@ -49,8 +57,13 @@ int llread(int fd, char *buffer) {
             return ERROR;
         }
         
-        // TODO: implement state machine 
+        printf("read hex: 0x%x ascii:%u\n", buffer[bytes_read], buffer[bytes_read]);
+        accept = state_machine(buffer[bytes_read]);
+        bytes_read++;
+
     } while (!accept);
+
+    printf("read %d bytes\n", bytes_read);
 
     return bytes_read;
 }
@@ -110,6 +123,7 @@ int llopen(int port, int mode) {
     char device[10];
 
     sprintf(device, "/dev/ttyS%d", port);
+    puts(device);
 
     int fd = open(device, O_RDWR | O_NOCTTY);
     if (fd == ERROR) {
