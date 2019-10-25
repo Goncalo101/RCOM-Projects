@@ -15,37 +15,6 @@
 
 static struct termios oldtio;
 
-int send_set(int fd) {
-    char set_command[TYPE_A_PACKET_LENGTH + 1];
-    int bcc = BCC(SENDER_CMD, SET_CMD);
-
-    sprintf(set_command, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, bcc, FLAG);
-
-    int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
-
-    char ack_command[TYPE_A_PACKET_LENGTH + 1];
-    int bytes_read = llread(fd, set_command);
-
-    return bytes_read;
-}
-
-int send_ack(int fd) {
-    char set_command[TYPE_A_PACKET_LENGTH + 1];
-    int bytes_read = llread(fd, set_command);
-
-    if (bytes_read == ERROR) {
-        exit(ERROR);
-    }
-
-    char ack_command[TYPE_A_PACKET_LENGTH + 1];
-    int bcc = BCC(RECEIVER_ANS, UACK_CMD);
-
-    sprintf(ack_command, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, bcc, FLAG);
-
-    int bytes_written = llwrite(fd, ack_command, TYPE_A_PACKET_LENGTH);
-    return bytes_written;
-}
-
 int llread(int fd, char *buffer) {
     int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
 
@@ -94,6 +63,89 @@ int llwrite(int fd, char *buffer, int length) {
 
     printf("wrote %d bytes\n", bytes_written);
 
+    return bytes_written;
+}
+
+char *build_packet(char *fragment, int *length) {
+    static char seq_no = 0;
+
+    *length += PACKET_HEAD_LEN + 1;
+
+    char *packet = malloc((*length) * sizeof(char));
+    sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (*length) / 255, (*length) % 255);
+    memcpy(&packet[4], fragment, *length);
+
+    return packet;
+}
+
+int calc_bcc2(char *packet, int length){
+    int bcc2 = BCC(packet[0], packet[1]);
+
+    for(int i = 2; i < length; ++i){
+        bcc2 = BCC(bcc2, packet[i]); 
+    }
+    return bcc2;
+}
+
+char *build_frame(char *fragment, int addr, int ctrl, int *length){
+    char *packet = build_packet(fragment, length);
+    int bcc2 = calc_bcc2(packet, *length);
+
+    char *frame = malloc(*length + FRAME_I_LENGTH + 1);
+    sprintf(frame, "%c%c%c%c", FLAG, addr, ctrl, BCC(addr, ctrl));
+    memcpy(&frame[4], packet, *length);
+    sprintf(&frame[4 + (*length)], "%c%c", bcc2, FLAG);
+
+    return frame;
+}
+
+int send_packet(int fd, char *fragment, int addr, int ctrl, int length){
+    char *frame = build_frame(fragment, addr, ctrl, &length);
+    printf("FRAME: %s\n", frame);
+    
+    return llwrite(fd, frame, length);
+}
+
+int check_cmd(int fd, char cmd_byte, char *cmd) {
+    int bytes_read = 0; 
+    while (cmd[2] != cmd_byte) {
+        bytes_read = llread(fd, cmd);
+        if (bytes_read == ERROR) {
+            exit(ERROR);
+        }
+    }
+
+    return bytes_read;
+}
+
+int send_set(int fd) {
+    char set_command[TYPE_A_PACKET_LENGTH + 1];
+    int bcc = BCC(SENDER_CMD, SET_CMD);
+
+    sprintf(set_command, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, bcc, FLAG);
+
+    int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
+
+    char ack_command[TYPE_A_PACKET_LENGTH + 1];
+    bzero(ack_command, TYPE_A_PACKET_LENGTH + 1);
+
+    int bytes_read = check_cmd(fd, UACK_CMD, ack_command);
+
+    return bytes_read;
+}
+
+int send_ack(int fd) {
+    char set_command[TYPE_A_PACKET_LENGTH + 1];
+    bzero(set_command, TYPE_A_PACKET_LENGTH + 1);
+
+    int bytes_read = check_cmd(fd, SET_CMD, set_command);
+
+    char ack_command[TYPE_A_PACKET_LENGTH + 1];
+    int bcc = BCC(RECEIVER_ANS, UACK_CMD);
+    
+    sprintf(ack_command, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, bcc, FLAG);
+
+    int bytes_written = llwrite(fd, ack_command, TYPE_A_PACKET_LENGTH);
     return bytes_written;
 }
 

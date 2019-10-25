@@ -1,7 +1,5 @@
 {
     "files.associations": {
-        "unistd.h": "c",
-        "errno.h": "c",
-        "stdbool.h": "c"
+        "connection.h": "c"
     }
 }
