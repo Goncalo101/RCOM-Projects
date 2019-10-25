@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "connection.h"
+#include "application.h"
 
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
@@ -22,7 +22,7 @@ void register_signal_handler() {
 }
 
 int main(int argc, char **argv) {
-  if ((argc < 3) ||
+  if ((argc < 4) ||
         ((strcmp("/dev/ttyS0", argv[1])!=0) &&
         (strcmp("/dev/ttyS1", argv[1])!=0) &&
         (strcmp("/dev/ttyS4", argv[1])!=0))) {
@@ -34,11 +34,9 @@ int main(int argc, char **argv) {
 
   int mode = atoi(argv[2]), port = atoi(&argv[1][9]);
 
-  int fd = llopen(port, mode);
+  start_app(port, mode, argv[3]);
 
-  if (fd == -1) {
-    return fd;
-  }
+  
 
   // if (llclose(fd) != 0)
   //   exit(-1);

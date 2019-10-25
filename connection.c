@@ -1,15 +1,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
 #include "connection.h"
 
-struct termios oldtio;
+static struct termios oldtio;
 
 int llopen(int port, int mode) {
     char device[10];
@@ -18,16 +20,16 @@ int llopen(int port, int mode) {
     sprintf(device, "/dev/ttyS%d", port);
 
     int fd = open(device, O_RDWR | O_NOCTTY);
-    if (fd == -1) {
+    if (fd == ERROR) {
         perror(device);
         return fd;
     }
 
     int tc_attr_status = tcgetattr(fd, &oldtio);
-    if (tc_attr_status == -1){ 
+    if (tc_attr_status == ERROR){ 
         /* save current port settings */
         perror("tcgetattr error");
-        exit(-1);
+        exit(ERROR);
     }
 
     bzero(&newtio, sizeof(newtio));
@@ -43,12 +45,33 @@ int llopen(int port, int mode) {
 
     tcflush(fd, TCIOFLUSH);
 
-    if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
+    if (tcsetattr(fd, TCSANOW, &newtio) == ERROR) {
         perror("tcsetattr error");
-        exit(-1);
+        exit(ERROR);
     }
 
     printf("New termios structure set\n");
 
     return fd;
+}
+
+int llread(int fd, char *buffer) {
+    int bytes_read = 0, accept = 0, res = 0;
+
+    do {
+        res = read(fd, &buffer[bytes_read], sizeof(char));
+        if (res == ERROR) {
+            perror("read failed");
+
+            if (errno == EINTR) {
+                printf("read timeout\n");
+                return INTERRUPTED;
+            }
+            return ERROR;
+        }
+        
+        // TODO: implement state machine 
+    } while (!accept);
+
+    return bytes_read;
 }
