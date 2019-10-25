@@ -11,7 +11,6 @@
 
 #define PACKET_SIZE 64
 
-#define TYPE_A_PACKET_LENGTH 5
 
 #define BAUDRATE B38400
 
