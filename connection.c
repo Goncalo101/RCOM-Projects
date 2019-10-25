@@ -15,6 +15,18 @@
 
 static struct termios oldtio;
 
+int check_cmd(int fd, char cmd_byte, char *cmd) {
+    int bytes_read = 0; 
+    while (cmd[2] != cmd_byte) {
+        bytes_read = llread(fd, cmd);
+        if (bytes_read == ERROR) {
+            exit(ERROR);
+        }
+    }
+
+    return bytes_read;
+}
+
 int send_set(int fd) {
     char set_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(SENDER_CMD, SET_CMD);
@@ -24,22 +36,22 @@ int send_set(int fd) {
     int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
 
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
-    int bytes_read = llread(fd, set_command);
+    bzero(ack_command, TYPE_A_PACKET_LENGTH + 1);
+
+    int bytes_read = check_cmd(fd, UACK_CMD, ack_command);
 
     return bytes_read;
 }
 
 int send_ack(int fd) {
     char set_command[TYPE_A_PACKET_LENGTH + 1];
-    int bytes_read = llread(fd, set_command);
+    bzero(set_command, TYPE_A_PACKET_LENGTH + 1);
 
-    if (bytes_read == ERROR) {
-        exit(ERROR);
-    }
+    int bytes_read = check_cmd(fd, SET_CMD, set_command);
 
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(RECEIVER_ANS, UACK_CMD);
-
+    
     sprintf(ack_command, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, bcc, FLAG);
 
     int bytes_written = llwrite(fd, ack_command, TYPE_A_PACKET_LENGTH);
