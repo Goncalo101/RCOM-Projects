@@ -5,11 +5,11 @@
 #include "connection.h"
 
 int send_file(char *filename) {
-
+    
 }
 
 int receive_file(char *filename) {
-    
+
 }
 
 void start_app(int port, int mode, char *filename) {
@@ -20,6 +20,5 @@ void start_app(int port, int mode, char *filename) {
     }
 
     func_ptr functions[] = {send_file, receive_file};
-
 }
 
