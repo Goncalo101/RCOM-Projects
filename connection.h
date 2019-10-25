@@ -3,6 +3,9 @@
 
 #define BAUDRATE B38400
 
+#define MAX_ALARM_COUNT 3
+#define TIMEOUT 3
+
 #define INTERRUPTED -2
 #define ERROR -1
 

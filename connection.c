@@ -33,6 +33,10 @@ int send_ack(int fd) {
     char set_command[TYPE_A_PACKET_LENGTH + 1];
     int bytes_read = llread(fd, set_command);
 
+    if (bytes_read == ERROR) {
+        exit(ERROR);
+    }
+
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(RECEIVER_ANS, UACK_CMD);
 
@@ -43,17 +47,19 @@ int send_ack(int fd) {
 }
 
 int llread(int fd, char *buffer) {
-    int bytes_read = 0, accept = 0, res = 0;
+    int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
 
     do {
+        alarm(TIMEOUT);
         res = read(fd, &buffer[bytes_read], sizeof(char));
         if (res == ERROR) {
-            perror("read failed");
-
             if (errno == EINTR) {
-                printf("read timeout\n");
-                return INTERRUPTED;
+                --alarm_count;
+                printf("read timeout %d\n", 3-alarm_count);
+                continue;
             }
+
+            perror("read failed");
             return ERROR;
         }
         
@@ -61,8 +67,13 @@ int llread(int fd, char *buffer) {
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
-    } while (!accept);
+    } while (!accept && alarm_count > 0);
+    alarm(0);
 
+    if (alarm_count <= 0) {
+        printf("Alarm limit reached.\n");
+        return ERROR;
+    }
     printf("read %d bytes\n", bytes_read);
 
     return bytes_read;

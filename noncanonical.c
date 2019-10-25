@@ -13,7 +13,7 @@
 
 volatile int STOP = FALSE;
 
-void alarm_handler() { printf("entrou\n"); }
+void alarm_handler() { printf("Received alarm.\n"); }
 
 void register_signal_handler() {
   struct sigaction action;
