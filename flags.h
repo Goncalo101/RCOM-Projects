@@ -18,4 +18,8 @@
 #define START_PACKET 0x02
 #define END_PACKET 0x03
 
+#define PACKET_HEAD_LEN 4
+#define TYPE_A_PACKET_LENGTH 5
+#define FRAME_I_LENGTH 6
+
 #endif

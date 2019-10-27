@@ -10,6 +10,7 @@
 #include "application.h"
 #include "connection.h"
 #include "flags.h"
+#include "types.h"
 
 static int fd = 0;
 
