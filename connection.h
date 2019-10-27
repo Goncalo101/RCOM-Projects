@@ -24,16 +24,14 @@ typedef enum {
 typedef struct {
     off_t file_size;
     char *filename;
-    int ctrl;
 } file_t;
 
 typedef struct {
     char *fragment;
-    int addr;
-    int ctrl;
 } packet_t;
 
 typedef struct {
+    char packet_ctrl, frame_ctrl, addr;
     request_t request_type;
     size_t length;
     union {

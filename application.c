@@ -36,12 +36,15 @@ int send_file(char *filename) {
     // build frame structure
     frame_t frame;
     file_t file_info = {.file_size = file_size};
-    file_info.filename = malloc(filename_len + 1);
+    file_info.filename = malloc(filename_len);
     strcpy(file_info.filename, filename);
-
-    frame.file_info = &file_info;
-    frame.length = filename_len;
+    
     frame.request_type = CTRL_REQ;
+    frame.length = filename_len;
+    frame.file_info = &file_info;
+    frame.packet_ctrl = START_PACKET;
+    frame.frame_ctrl = 0x01; // TODO change to proper value
+    frame.addr = SENDER_CMD;
     
     printf("sending %s (name length %d, file size %ld)\n", file_info.filename, frame.length, file_size);
 
@@ -49,25 +52,25 @@ int send_file(char *filename) {
     send_packet(fd, &frame);
     return 0;
 
-    off_t bytes_read = 0;
-    int bytes_written = 0;
+    // off_t bytes_read = 0;
+    // int bytes_written = 0;
 
-    char pinguim[64+1];
-    char control[2] = {0, 0x40};
-    int counter = 0;
-    while(bytes_read < file_size){
-        bytes_read += read(file_desc, pinguim, 64);
-        if(bytes_read == ERROR) perror("ERRO");
-        printf("BYTES READ: %d\n", bytes_read);
+    // char pinguim[64+1];
+    // char control[2] = {0, 0x40};
+    // int counter = 0;
+    // while(bytes_read < file_size){
+    //     bytes_read += read(file_desc, pinguim, 64);
+    //     if(bytes_read == ERROR) perror("ERRO");
+    //     printf("BYTES READ: %d\n", bytes_read);
 
-        packet_t packet = {.fragment = pinguim, .addr = SENDER_CMD, .ctrl = control[counter%2]};
-        frame.packet = &packet;
+    //     packet_t packet = {.fragment = pinguim, .addr = SENDER_CMD, .ctrl = control[counter%2]};
+    //     frame.packet = &packet;
 
-        bytes_written = send_packet(fd, &frame);
-        ++counter;
-    }
+    //     bytes_written = send_packet(fd, &frame);
+    //     ++counter;
+    // }
 
-    return 0;
+    // return 0;
 }
 
 int receive_file(char *filename) {
