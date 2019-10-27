@@ -16,6 +16,11 @@
 
 typedef int (*sender_func)(int);
 
+typedef enum {
+    DATA_REQ,
+    CTRL_REQ
+} request_t;
+
 typedef struct {
     off_t file_size;
     char *filename;
@@ -26,13 +31,15 @@ typedef struct {
     char *fragment;
     int addr;
     int ctrl;
-    int length;
 } packet_t;
 
-typedef struct
-{
-    file_t *file_info;
-    packet_t *packet;
+typedef struct {
+    request_t request_type;
+    int length;
+    union {
+        file_t *file_info;
+        packet_t *packet;
+    };
 } frame_t;
 
 

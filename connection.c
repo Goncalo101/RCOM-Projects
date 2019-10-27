@@ -87,48 +87,51 @@ int calc_bcc2(char *packet, int length){
     return bcc2;
 }
 
-char *build_frame(frame_t *frame){
-    char *packet;
-    if(frame->file_info == NULL && frame->packet != NULL)
-        packet = build_packet(frame->packet->fragment, frame->packet->length);
-    else if(frame->file_info != NULL && frame->packet == NULL)
-        packet = build_control_packet(frame->file_info);
-
-    int bcc2 = calc_bcc2(packet, frame->packet->length);
-
-    char *frame = malloc(frame->packet->length + FRAME_I_LENGTH + 1);
-    sprintf(frame, "%c%c%c%c", FLAG, frame->packet->addr, frame->packet->ctrl, BCC(frame->packet->addr, frame->packet->ctrl));
-
-    memcpy(&frame[4], packet, frame->packet->length);
-
-    sprintf(&frame[4 + (frame->packet->length)], "%c%c", bcc2, FLAG);
-
-    return frame;
-}
-
-char *build_control_packet(file_t *file_info){
-    int total_size = 5 + strlen(file_info->filename) + 8 + 1;
+char *build_control_packet(file_t *file_info, int *length){
+    size_t filename_len = strlen(file_info->filename);
+    int total_size = 5 + filename_len + 8 + 1;
     char *ctrl_packet = malloc(total_size);
 
-    sprintf(ctrl_packet, "%c%c%c%ld%c%c%s", file_info->ctrl, FILE_SIZE_PARAM, 8, file_info->file_size, FILE_NAME_PARAM, strlen(file_info->filename), file_info->filename);
+    sprintf(ctrl_packet, "%c%c%c%ld%c%c", file_info->ctrl, FILE_SIZE_PARAM, 8, file_info->file_size, FILE_NAME_PARAM, strlen(file_info->filename));
+    memcpy(&ctrl_packet[6 + 8], file_info->filename, filename_len);
 
-    for(int i = 0; i < total_size; ++i)
+    for (int i = 0; i < total_size; ++i)
         printf("CTRL: 0x%x\n", ctrl_packet[i]);
 
     return ctrl_packet;
 }
 
+char *build_frame(frame_t *frame){
+    char *packet;
+    switch (frame->request_type) {
+        case DATA_REQ:
+            packet = build_packet(frame->packet->fragment, &frame->length);
+            break;
+        case CTRL_REQ:
+            packet = build_control_packet(frame->file_info, &frame->length);
+        default:break;
+    }
 
+    int bcc2 = calc_bcc2(packet, frame->length);
 
+    char *frame = malloc(frame->length + FRAME_I_LENGTH + 1);
+    sprintf(frame, "%c%c%c%c", FLAG, frame->packet->addr, frame->packet->ctrl, BCC(frame->packet->addr, frame->packet->ctrl));
+
+    memcpy(&frame[4], packet, frame->length);
+
+    sprintf(&frame[4 + (frame->length)], "%c%c", bcc2, FLAG);
+
+    return frame;
+}
 
 int send_packet(int fd, frame_t *frame){
-    char *frame = build_frame(frame->packet);
+    char *frame = build_frame(frame);
     
     printf("FRAME: %s\n", frame);
     
     
     
-    return llwrite(fd, frame, length);
+    return llwrite(fd, frame, frame->length);
 }
 
 int check_cmd(int fd, char cmd_byte, char *cmd) {
