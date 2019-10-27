@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "application.h"
@@ -12,31 +13,41 @@
 
 static int fd = 0;
 
-off_t get_file_size(char *filename) {
+off_t get_file_size(int fd) {
     struct stat file_stat;
-    stat(filename, &file_stat);
+    fstat(fd, &file_stat);
 
     return file_stat.st_size;
 }
 
 int send_file(char *filename) {
-    off_t file_size = get_file_size(filename);
+    // open file and check for errors
     int file_desc = open(filename, O_RDONLY, 0777);
 
-    if(file_desc == ERROR){
+    if (file_desc == ERROR) {
         perror("file descriptor");
         return ERROR;
     }
 
-    frame_t frame;
+    // get file properties (file size and filename length)
+    off_t file_size = get_file_size(file_desc);
+    size_t filename_len = strlen(filename);
 
-    file_t file_info = {.file_size = file_size, .filename = filename};
+    // build frame structure
+    frame_t frame;
+    file_t file_info = {.file_size = file_size};
+    file_info.filename = malloc(filename_len + 1);
+    strcpy(file_info.filename, filename);
 
     frame.file_info = &file_info;
-
-    send_packet(fd, &frame);
-
+    frame.length = filename_len;
     
+    printf("sending %s (name length %d, file size %ld)\n", file_info.filename, frame.length, file_size);
+
+    // send frame
+    send_packet(fd, &frame);
+    return 0;
+
     off_t bytes_read = 0;
     int bytes_written = 0;
 
@@ -48,7 +59,7 @@ int send_file(char *filename) {
         if(bytes_read == ERROR) perror("ERRO");
         printf("BYTES READ: %d\n", bytes_read);
 
-        packet_t packet = {.fragment = pinguim, .addr = SENDER_CMD, .ctrl = control[counter%2], .length = 64};
+        packet_t packet = {.fragment = pinguim, .addr = SENDER_CMD, .ctrl = control[counter%2]};
         frame.packet = &packet;
 
         bytes_written = send_packet(fd, &frame);

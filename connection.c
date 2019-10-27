@@ -66,7 +66,16 @@ int llwrite(int fd, char *buffer, int length) {
     return bytes_written;
 }
 
-char *build_packet(char *fragment, int *length) {
+int calc_bcc2(char *packet, size_t length){
+    int bcc2 = BCC(packet[0], packet[1]);
+
+    for(int i = 2; i < length; ++i){
+        bcc2 = BCC(bcc2, packet[i]); 
+    }
+    return bcc2;
+}
+
+char *build_packet(char *fragment, size_t *length) {
     static char seq_no = 0;
 
     *length += PACKET_HEAD_LEN + 1;
@@ -78,24 +87,18 @@ char *build_packet(char *fragment, int *length) {
     return packet;
 }
 
-int calc_bcc2(char *packet, int length){
-    int bcc2 = BCC(packet[0], packet[1]);
-
-    for(int i = 2; i < length; ++i){
-        bcc2 = BCC(bcc2, packet[i]); 
-    }
-    return bcc2;
-}
-
-char *build_control_packet(file_t *file_info, int *length){
+char *build_control_packet(file_t *file_info, size_t *length){
+    printf("new length: %d\n", *length);
     size_t filename_len = strlen(file_info->filename);
-    int total_size = 5 + filename_len + 8 + 1;
-    char *ctrl_packet = malloc(total_size);
+    
+    *length = 5 + filename_len + 8 + 1;
+    char *ctrl_packet = malloc(*length);
+
 
     sprintf(ctrl_packet, "%c%c%c%ld%c%c", file_info->ctrl, FILE_SIZE_PARAM, 8, file_info->file_size, FILE_NAME_PARAM, strlen(file_info->filename));
     memcpy(&ctrl_packet[6 + 8], file_info->filename, filename_len);
 
-    for (int i = 0; i < total_size; ++i)
+    for (int i = 0; i < *length; ++i)
         printf("CTRL: 0x%x\n", ctrl_packet[i]);
 
     return ctrl_packet;
@@ -103,35 +106,38 @@ char *build_control_packet(file_t *file_info, int *length){
 
 char *build_frame(frame_t *frame){
     char *packet;
+    printf("building control packet with initial length %d\n", frame->length);
     switch (frame->request_type) {
         case DATA_REQ:
-            packet = build_packet(frame->packet->fragment, &frame->length);
+            packet = build_packet(frame->packet->fragment, &(frame->length));
             break;
         case CTRL_REQ:
-            packet = build_control_packet(frame->file_info, &frame->length);
+            packet = build_control_packet(frame->file_info, &(frame->length));
         default:break;
     }
 
+    for (int i = 0 ; i < frame->length; ++i) {
+        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+    }
+    printf("control packet built\n");
+
+
     int bcc2 = calc_bcc2(packet, frame->length);
 
-    char *frame = malloc(frame->length + FRAME_I_LENGTH + 1);
-    sprintf(frame, "%c%c%c%c", FLAG, frame->packet->addr, frame->packet->ctrl, BCC(frame->packet->addr, frame->packet->ctrl));
+    char *frame_str = malloc(frame->length + FRAME_I_LENGTH + 1);
+    sprintf(frame_str, "%c%c%c%c", FLAG, frame->packet->addr, frame->packet->ctrl, BCC(frame->packet->addr, frame->packet->ctrl));
+    memcpy(&frame_str[4], packet, frame->length);
+    sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
 
-    memcpy(&frame[4], packet, frame->length);
-
-    sprintf(&frame[4 + (frame->length)], "%c%c", bcc2, FLAG);
-
-    return frame;
+    return frame_str;
 }
 
 int send_packet(int fd, frame_t *frame){
-    char *frame = build_frame(frame);
+    char *frame_str = build_frame(frame);
     
-    printf("FRAME: %s\n", frame);
+    printf("FRAME: %s\n", frame_str);
     
-    
-    
-    return llwrite(fd, frame, frame->length);
+    return llwrite(fd, frame_str, frame->length);
 }
 
 int check_cmd(int fd, char cmd_byte, char *cmd) {

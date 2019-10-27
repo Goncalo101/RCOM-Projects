@@ -24,7 +24,7 @@ typedef enum {
 typedef struct {
     off_t file_size;
     char *filename;
-    int ctrl
+    int ctrl;
 } file_t;
 
 typedef struct {
@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     request_t request_type;
-    int length;
+    size_t length;
     union {
         file_t *file_info;
         packet_t *packet;
