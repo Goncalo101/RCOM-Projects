@@ -41,6 +41,7 @@ int send_file(char *filename) {
 
     frame.file_info = &file_info;
     frame.length = filename_len;
+    frame.request_type = CTRL_REQ;
     
     printf("sending %s (name length %d, file size %ld)\n", file_info.filename, frame.length, file_size);
 

@@ -88,7 +88,6 @@ char *build_packet(char *fragment, size_t *length) {
 }
 
 char *build_control_packet(file_t *file_info, size_t *length){
-    printf("new length: %d\n", *length);
     size_t filename_len = strlen(file_info->filename);
     
     *length = 5 + filename_len + 8 + 1;
@@ -97,9 +96,6 @@ char *build_control_packet(file_t *file_info, size_t *length){
 
     sprintf(ctrl_packet, "%c%c%c%ld%c%c", file_info->ctrl, FILE_SIZE_PARAM, 8, file_info->file_size, FILE_NAME_PARAM, strlen(file_info->filename));
     memcpy(&ctrl_packet[6 + 8], file_info->filename, filename_len);
-
-    for (int i = 0; i < *length; ++i)
-        printf("CTRL: 0x%x\n", ctrl_packet[i]);
 
     return ctrl_packet;
 }
