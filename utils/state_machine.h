@@ -2,11 +2,12 @@
 #define STATE_MACHINE_H
 
 typedef enum {
-    CONTROL_FLD,
+    CTRL_FLD,
     SEQ_NO,
     LENGTH,
     DATA,
-    BCC2_OK
+    BCC2_CHECK,
+    CHECK_END_FLAG
 } data_state;
 
 typedef enum {
