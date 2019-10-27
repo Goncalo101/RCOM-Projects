@@ -44,7 +44,7 @@ int send_file(char *filename) {
     frame.length = filename_len;
     frame.file_info = &file_info;
     frame.packet_ctrl = START_PACKET;
-    frame.frame_ctrl = 0x01; // TODO change to proper value
+    frame.frame_ctrl = 0x0; // TODO change to proper value
     frame.addr = SENDER_CMD;
     
     printf("sending %s (name length %d, file size %ld)\n", file_info.filename, frame.length, file_size);
@@ -75,6 +75,8 @@ int send_file(char *filename) {
 }
 
 int receive_file(char *filename) {
+    char buf[1000];
+    llread(fd, buf);
     return 0;
 }
 

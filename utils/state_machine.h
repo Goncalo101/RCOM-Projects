@@ -7,7 +7,6 @@ typedef enum {
     LENGTH,
     DATA,
     BCC2_CHECK,
-    CHECK_END_FLAG
 } data_state;
 
 typedef enum {
@@ -16,6 +15,7 @@ typedef enum {
     A_RCV,
     C_RCV,
     BCC_OK,
+    CHECK_END_FLAG,
     MACHINE_STOP
 } machine_state;
 

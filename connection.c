@@ -25,7 +25,7 @@ int llread(int fd, char *buffer) {
         if (res == ERROR) {
             if (errno == EINTR) {
                 --alarm_count;
-                printf("read timeout %d\n", 3-alarm_count);
+                printf("read timeout %d\n", MAX_ALARM_COUNT - alarm_count);
                 continue;
             }
 

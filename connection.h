@@ -15,5 +15,7 @@ typedef int (*sender_func)(int);
 
 int llopen(int port, int mode);
 int send_packet(int fd, frame_t *frame);
+// int receive_packet(int fd, frame_t *frame);
+int llread(int fd, char *buffer);
 
 #endif
