@@ -27,6 +27,16 @@ int send_file(char *filename) {
         perror("file descriptor");
         return ERROR;
     }
+
+    frame_t frame;
+
+    file_t file_info = {.file_size = file_size, .filename = filename};
+
+    frame.file_info = &file_info;
+
+    send_packet(fd, &frame);
+
+    
     off_t bytes_read = 0;
     int bytes_written = 0;
 
@@ -38,9 +48,13 @@ int send_file(char *filename) {
         if(bytes_read == ERROR) perror("ERRO");
         printf("BYTES READ: %d\n", bytes_read);
 
-        bytes_written = send_packet(fd, pinguim, SENDER_CMD, control[counter%2], 64);
+        packet_t packet = {.fragment = pinguim, .addr = SENDER_CMD, .ctrl = control[counter%2], .length = 64};
+        frame.packet = &packet;
+
+        bytes_written = send_packet(fd, &frame);
         ++counter;
     }
+
     return 0;
 }
 

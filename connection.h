@@ -16,7 +16,27 @@
 
 typedef int (*sender_func)(int);
 
+typedef struct {
+    off_t file_size;
+    char *filename;
+    int ctrl
+} file_t;
+
+typedef struct {
+    char *fragment;
+    int addr;
+    int ctrl;
+    int length;
+} packet_t;
+
+typedef struct
+{
+    file_t *file_info;
+    packet_t *packet;
+} frame_t;
+
+
 int llopen(int port, int mode);
-int send_packet(int fd, char *fragment, int addr, int ctrl, int length);
+int send_packet(int fd, frame_t *frame);
 
 #endif
