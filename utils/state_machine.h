@@ -22,6 +22,7 @@ typedef enum {
     A_RCV,
     C_RCV,
     BCC_OK,
+    ESC,
     CHECK_END_FLAG,
     MACHINE_STOP
 } machine_state;

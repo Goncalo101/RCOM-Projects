@@ -93,8 +93,8 @@ int data_machine(char rec_byte) {
 
 int state_machine(char rec_byte) {
     static machine_state state = START;
-    static char cmd = 0, addr = 0; 
-
+    static char cmd = 0, addr = 0;
+    
     switch (state) {
     case START:
         if (rec_byte == FLAG) 
@@ -131,10 +131,20 @@ int state_machine(char rec_byte) {
             cmd = 0;
             addr = 0;
             return 1;
-        } else if (data_machine(rec_byte)) {
+        } else if (rec_byte == ESCAPE) {
+            state = ESC;
+        }
+
+        if (data_machine(rec_byte)) {
             state = CHECK_END_FLAG;
         }
 
+        break;
+    case ESC:
+        if (data_machine(rec_byte)) {
+            state = CHECK_END_FLAG;
+        }
+        state = BCC_OK;
         break;
     case CHECK_END_FLAG:
         if (rec_byte == FLAG) {
@@ -146,5 +156,6 @@ int state_machine(char rec_byte) {
     default:
         break;
     }
+
     return 0;
 }
