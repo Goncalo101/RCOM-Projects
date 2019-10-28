@@ -80,16 +80,9 @@ char *build_frame(frame_t *frame) {
     printf("new length %d\n", frame->length);
 
     int bcc2 = calc_bcc2(packet, frame->length);
-
-    // for (int i = 0; i < frame->length; ++i) {
-    //     printf("packet[%d]: 0x%02x\n", i, packet[i]);
-    // }
     
     char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
-    memcpy(&frame_str[4], packet, frame->length);
-    sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
-    frame->length += FRAME_I_LENGTH;
 
     printf("BEFORE BYTE STUFFING: %d\n", frame->length);
     char esc_esc[3];
@@ -103,6 +96,14 @@ char *build_frame(frame_t *frame) {
     char esc_bcc[] = {ESCAPE, (char)bcc2};
     packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
     printf("AFTER BYTE STUFFING: %d\n", frame->length);
+    
+    memcpy(&frame_str[4], packet, frame->length);
+    sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
+    frame->length += FRAME_I_LENGTH;
+
+    for(size_t i = 0; i < frame->length; ++i)
+        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+
 
     return frame_str;
 }
