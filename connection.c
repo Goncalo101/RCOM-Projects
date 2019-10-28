@@ -14,6 +14,7 @@
 #include "connection.h"
 #include "flags.h"
 
+static frame_t received_frame;
 static struct termios oldtio;
 
 int llread(int fd, char *buffer) {

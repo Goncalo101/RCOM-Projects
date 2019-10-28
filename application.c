@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "utils/builders.h"
 #include "application.h"
 #include "connection.h"
 #include "flags.h"
@@ -36,47 +37,63 @@ int send_file(char *filename) {
 
     // build frame structure
     frame_t frame;
-    file_t file_info = {.file_size = file_size};
-    file_info.filename = malloc(filename_len);
-    strcpy(file_info.filename, filename);
-    
-    frame.request_type = CTRL_REQ;
-    frame.length = filename_len;
-    frame.file_info = &file_info;
-    frame.packet_ctrl = START_PACKET;
-    frame.frame_ctrl = 0x0; // TODO change to proper value
-    frame.addr = SENDER_CMD;
-    
-    printf("sending %s (name length %d, file size %ld)\n", file_info.filename, frame.length, file_size);
+    char control[2] = {0, 0x40};
+    int counter = 0;
+    prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, START_PACKET, control[counter % 2]);
+    ++counter;
+
+    printf("sending %s (name length %d, file size %ld)\n", frame.file_info->filename, frame.length, file_size);
 
     // send frame
-    send_packet(fd, &frame);
+    if (send_packet(fd, &frame) == ERROR) return ERROR;
+
+    // send file
+    off_t total_read = 0;
+    int bytes_written = 0;
+
+    char *file_fragment = malloc(MAX_FRAGMENT_SIZE);
+
+    // prepare data frame
+    frame.request_type = DATA_REQ;
+    frame.packet_ctrl = DATA_PACKET;
+    frame.addr = SENDER_CMD;
+    
+    packet_t packet;
+    packet.fragment = malloc(MAX_FRAGMENT_SIZE);
+
+    while (total_read < file_size) {
+        int bytes_read = read(file_desc, file_fragment, MAX_FRAGMENT_SIZE);
+        total_read += bytes_read;
+        
+        file_fragment = realloc(file_fragment, bytes_read);
+
+        if (bytes_read == ERROR) perror("ERRO");
+        printf("BYTES READ: %d\n", total_read);
+        
+        packet.fragment = realloc(packet.fragment, bytes_read);
+        memcpy(packet.fragment, file_fragment, bytes_read);
+
+        frame.packet = &packet;
+        frame.length = bytes_read;
+        frame.frame_ctrl = control[counter % 2];
+
+        bytes_written = send_packet(fd, &frame);
+        ++counter;
+    }
+
+    free(file_fragment);
+    free(packet.fragment);
+
     return 0;
-
-    // off_t bytes_read = 0;
-    // int bytes_written = 0;
-
-    // char pinguim[64+1];
-    // char control[2] = {0, 0x40};
-    // int counter = 0;
-    // while(bytes_read < file_size){
-    //     bytes_read += read(file_desc, pinguim, 64);
-    //     if(bytes_read == ERROR) perror("ERRO");
-    //     printf("BYTES READ: %d\n", bytes_read);
-
-    //     packet_t packet = {.fragment = pinguim, .addr = SENDER_CMD, .ctrl = control[counter%2]};
-    //     frame.packet = &packet;
-
-    //     bytes_written = send_packet(fd, &frame);
-    //     ++counter;
-    // }
-
-    // return 0;
 }
 
 int receive_file(char *filename) {
     char buf[1000];
     llread(fd, buf);
+    llread(fd, buf);
+
+    int fd = open("filename.gif", O_WRONLY | O_CREAT, 0777);
+    write(fd, &buf[8], 10973);
     return 0;
 }
 
@@ -86,6 +103,5 @@ void start_app(int port, int mode, char *filename) {
         perror("llopen error");
         exit(-1);
     }
-
 }
 

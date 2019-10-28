@@ -1,6 +1,8 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#define MAX_FRAGMENT_SIZE 65536
+
 typedef int (*func_ptr)(char*);
 
 void start_app(int port, int mode, char *filename);

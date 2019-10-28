@@ -31,6 +31,7 @@ char *build_data_packet(char *fragment, size_t *length) {
     *length += PACKET_HEAD_LEN + 1;
 
     char *packet = malloc((*length) * sizeof(char));
+    printf ("\033[32;1m LENGTH / 255: %d, length: %d \033[0m\n", (*length) / 255, *length);
     sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (*length) / 255, (*length) % 255);
     memcpy(&packet[4], fragment, *length);
 
@@ -78,6 +79,10 @@ char *build_frame(frame_t *frame) {
     printf("new length %d\n", frame->length);
 
     int bcc2 = calc_bcc2(packet, frame->length);
+
+    for (int i = 0; i < frame->length; ++i) {
+        printf("packet[%d]: 0x%02x\n", i, packet[i]);
+    }
     
     char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
@@ -86,4 +91,18 @@ char *build_frame(frame_t *frame) {
 
     frame->length += FRAME_I_LENGTH;
     return frame_str;
+}
+
+void prepare_control_frame(frame_t *frame, off_t file_size, size_t filename_len, char *filename, char addr, request_t req, char packet_ctrl, char frame_ctrl) {
+    file_t *file_info = malloc(sizeof(file_t));
+    file_info->file_size = file_size;
+    file_info->filename = malloc(filename_len);
+    strcpy(file_info->filename, filename);
+    
+    frame->request_type = req;
+    frame->length = filename_len;
+    frame->file_info = file_info;
+    frame->packet_ctrl = packet_ctrl;
+    frame->frame_ctrl = frame_ctrl;
+    frame->addr = addr;
 }
