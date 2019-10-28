@@ -61,11 +61,12 @@ int send_file(char *filename) {
     packet_t packet;
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
 
-    while (total_read < file_size) {
+    while (total_read < 286) {
         int bytes_read = read(file_desc, file_fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
         
-        file_fragment = realloc(file_fragment, bytes_read);
+        if (bytes_read < MAX_FRAGMENT_SIZE)
+            file_fragment = realloc(file_fragment, bytes_read);
 
         if (bytes_read == ERROR) perror("ERRO");
         printf("BYTES READ: %d\n", total_read);

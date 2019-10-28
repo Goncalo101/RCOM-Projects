@@ -1,0 +1,52 @@
+/dev/ttyS1
+New termios structure set
+read hex: 0x7e ascii:126
+read hex: 0x3 ascii:3
+read hex: 0x3 ascii:3
+read hex: 0x0 ascii:0
+read hex: 0x7e ascii:126
+read 5 bytes
+wrote hex: 0x7e ascii:126
+wrote hex: 0x3 ascii:3
+wrote hex: 0x7 ascii:7
+wrote hex: 0x4 ascii:4
+wrote hex: 0x7e ascii:126
+wrote 5 bytes
+read hex: 0x7e ascii:126
+read hex: 0x3 ascii:3
+read hex: 0x0 ascii:0
+read hex: 0x3 ascii:3
+read hex: 0x2 ascii:2
+read hex: 0x0 ascii:0
+read hex: 0x8 ascii:8
+read hex: 0x0 ascii:0
+read hex: 0x0 ascii:0
+read hex: 0x0 ascii:0
+read hex: 0x0 ascii:0
+read hex: 0x0 ascii:0
+read hex: 0x0 ascii:0
+read hex: 0x2a ascii:42
+read hex: 0xffffffd8 ascii:4294967256
+read hex: 0x1 ascii:1
+read hex: 0xb ascii:11
+read hex: 0x70 ascii:112
+read hex: 0x69 ascii:105
+read hex: 0x6e ascii:110
+read hex: 0x67 ascii:103
+read hex: 0x75 ascii:117
+read hex: 0x69 ascii:105
+read hex: 0x6d ascii:109
+read hex: 0x2e ascii:46
+read hex: 0x67 ascii:103
+read hex: 0x69 ascii:105
+read hex: 0x66 ascii:102
+read hex: 0xffffffd5 ascii:4294967253
+read hex: 0x7e ascii:126
+read 30 bytes
+Received alarm.
+read timeout 1
+Received alarm.
+read timeout 2
+Received alarm.
+read timeout 3
+Alarm limit reached.

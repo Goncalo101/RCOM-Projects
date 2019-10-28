@@ -89,22 +89,21 @@ char *build_frame(frame_t *frame) {
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
     memcpy(&frame_str[4], packet, frame->length);
     sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
+    frame->length += FRAME_I_LENGTH;
 
     printf("BEFORE BYTE STUFFING: %d\n", frame->length);
-    char esc_esc[] = {ESCAPE, ESCAPE};
-    char escape[] = {ESCAPE};
-    str_replace(packet, escape, esc_esc, &(frame->length));
+    char esc_esc[3];
+    sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
 
-    char flag[] = {FLAG};
+    str_replace(packet, ESCAPE, esc_esc, &(frame->length));
+
     char esc_flag[] = {ESCAPE, FLAG};
-    str_replace(packet, flag, esc_flag, &(frame->length));
+    str_replace(packet, FLAG, esc_flag, &(frame->length));
 
-    char bcc_arr[] = {bcc2};
     char esc_bcc[] = {ESCAPE, bcc2};
-    str_replace(packet, bcc_arr, esc_bcc, &(frame->length));
+    str_replace(packet, bcc2, esc_bcc, &(frame->length));
     printf("AFTER BYTE STUFFING: %d\n", frame->length);
 
-    frame->length += FRAME_I_LENGTH;
     return frame_str;
 }
 
