@@ -6,6 +6,7 @@
 
 #include "../flags.h"
 #include "builders.h"
+#include "strmanip.h"
 
 int calc_bcc2(char *packet, size_t length){
     int bcc2 = BCC(packet[0], packet[1]);
@@ -80,14 +81,28 @@ char *build_frame(frame_t *frame) {
 
     int bcc2 = calc_bcc2(packet, frame->length);
 
-    for (int i = 0; i < frame->length; ++i) {
-        printf("packet[%d]: 0x%02x\n", i, packet[i]);
-    }
+    // for (int i = 0; i < frame->length; ++i) {
+    //     printf("packet[%d]: 0x%02x\n", i, packet[i]);
+    // }
     
     char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
     memcpy(&frame_str[4], packet, frame->length);
     sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
+
+    printf("BEFORE BYTE STUFFING: %d\n", frame->length);
+    char esc_esc[] = {ESCAPE, ESCAPE};
+    char escape[] = {ESCAPE};
+    str_replace(packet, escape, esc_esc, &(frame->length));
+
+    char flag[] = {FLAG};
+    char esc_flag[] = {ESCAPE, FLAG};
+    str_replace(packet, flag, esc_flag, &(frame->length));
+
+    char bcc_arr[] = {bcc2};
+    char esc_bcc[] = {ESCAPE, bcc2};
+    str_replace(packet, bcc_arr, esc_bcc, &(frame->length));
+    printf("AFTER BYTE STUFFING: %d\n", frame->length);
 
     frame->length += FRAME_I_LENGTH;
     return frame_str;

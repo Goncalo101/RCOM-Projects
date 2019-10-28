@@ -4,6 +4,7 @@
         "state_machine.h": "c",
         "stdbool.h": "c",
         "builders.h": "c",
-        "flags.h": "c"
+        "flags.h": "c",
+        "strmanip.h": "c"
     }
 }
