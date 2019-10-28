@@ -95,13 +95,13 @@ char *build_frame(frame_t *frame) {
     char esc_esc[3];
     sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
 
-    str_replace(packet, ESCAPE, esc_esc, &(frame->length));
+    packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
     char esc_flag[] = {ESCAPE, FLAG};
-    str_replace(packet, FLAG, esc_flag, &(frame->length));
+    packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
-    char esc_bcc[] = {ESCAPE, bcc2};
-    str_replace(packet, bcc2, esc_bcc, &(frame->length));
+    char esc_bcc[] = {ESCAPE, (char)bcc2};
+    packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
     printf("AFTER BYTE STUFFING: %d\n", frame->length);
 
     return frame_str;

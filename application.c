@@ -61,7 +61,7 @@ int send_file(char *filename) {
     packet_t packet;
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
 
-    while (total_read < 286) {
+    while (total_read < file_size) {
         int bytes_read = read(file_desc, file_fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
         
@@ -82,6 +82,10 @@ int send_file(char *filename) {
         ++counter;
     }
 
+    prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
+    if (send_packet(fd, &frame) == ERROR) return ERROR;
+
+
     free(file_fragment);
     free(packet.fragment);
 
@@ -89,7 +93,7 @@ int send_file(char *filename) {
 }
 
 int receive_file(char *filename) {
-    char buf[1000];
+    char buf[10973];
     llread(fd, buf);
     llread(fd, buf);
 
