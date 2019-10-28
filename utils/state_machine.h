@@ -2,8 +2,15 @@
 #define STATE_MACHINE_H
 
 typedef enum {
+    TYPE,
+    TLV_LENGTH,
+    VALUE
+} tlv_state;
+
+typedef enum {
     CTRL_FLD,
     SEQ_NO,
+    TLV,
     LENGTH,
     DATA,
     BCC2_CHECK,

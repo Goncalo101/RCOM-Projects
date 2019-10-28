@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "connection.h": "c",
-        "state_machine.h": "c"
+        "state_machine.h": "c",
+        "stdbool.h": "c"
     }
 }

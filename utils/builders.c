@@ -16,11 +16,12 @@ int calc_bcc2(char *packet, size_t length){
     return bcc2;
 }
 
-void int_to_string(int integer, char string[8]) {
+void int_to_string(off_t integer, char string[8]) {
     off_t mask = 0xff;
 
+    bzero(string, 8);
     for (int i = 7; i >= 0; --i) {
-        string[7 - i] = mask & integer >> (8 * i);
+        string[7 - i] = mask & (integer >> (8 * i));
     }
 }
 
