@@ -114,8 +114,6 @@ int get_packet(int fd, frame_t *frame) {
     buffer = realloc(buffer, bytes_read);
     size_t len;
 
-
-
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:
             len = buffer[5]*255 + buffer[6];

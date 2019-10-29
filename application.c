@@ -105,11 +105,13 @@ int receive_file(char *filename) {
     free(frame.file_info);
 
     frame.packet = malloc(sizeof(packet_t));
-    int fd = open("filename.gif", O_WRONLY | O_CREAT, 0777);
+    int file_desc = open("filename.gif", O_WRONLY | O_CREAT, 0777);
 
     while(bytes_read < file_size){
         bytes_read += get_packet(fd, &frame);
-        write(fd, &frame.packet->fragment[8], bytes_read);
+        if (bytes_read == ERROR) exit(-1);
+
+        write(file_desc, &frame.packet->fragment[8], bytes_read);
     }
 
     return 0;
