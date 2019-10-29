@@ -135,17 +135,6 @@ int get_packet(int fd, frame_t *frame) {
             frame->packet->fragment = malloc(len);
             memcpy(frame->packet->fragment, &buffer[8], len);
             
-            char buf[TYPE_A_PACKET_LENGTH];
-            char cmd;
-            if (buffer[2] == 0) {
-                cmd = 0x40;
-            } else if (buffer[2] == 0x40) {
-                cmd = 0;
-            }
-
-            sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
-
-            llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
             return frame->length;
         case START_PACKET:
             frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
@@ -153,6 +142,18 @@ int get_packet(int fd, frame_t *frame) {
             strncpy(frame->file_info->filename, &buffer[CTRL_POS + 13], bytes_read - CTRL_POS - 1 - SIZE_LENGTH - 4 - 2);
             break;
     }
+    
+    char buf[TYPE_A_PACKET_LENGTH];
+    char cmd;
+    if (buffer[2] == 0) {
+        cmd = 0x40;
+    } else if (buffer[2] == 0x40) {
+        cmd = 0;
+    }
+
+    sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
+
+    llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
 
     return bytes_read;
 }
