@@ -39,6 +39,7 @@ int llread(int fd, char *buffer) {
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
+    printf("oioioioi: 0x%02x %d\n", buffer[bytes_read-1], accept);
     alarm(0);
 
     if (alarm_count <= 0) {

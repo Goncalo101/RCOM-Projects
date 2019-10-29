@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../flags.h"
 #include "strmanip.h"
 
 char *str_replace(char *target, char needle, const char *replacement, size_t* length) {
@@ -17,11 +18,27 @@ char *str_replace(char *target, char needle, const char *replacement, size_t* le
             buffer = (char *) realloc(buffer, ++(*length));
             memcpy(buffer + i + 1, buffer + i, (*length) - i - 1);
 
-            buffer[i] = 0x7D;
+            buffer[i] = ESCAPE;
 
             i++;
         }
     }
 
     return buffer;
+}
+
+
+char *rm_stuffing(char *str, size_t length){
+    char *buf = malloc(length);
+
+    for (size_t i = 0, j = 0; i < length; i++,j++)
+    {
+        if(str[j] == ESCAPE)
+            buf[i] = str[++j];
+        else buf[i] = str[j];
+        printf("DESTUFFAR[%d] = 0x%02x\n", i, buf[i]);
+    }
+    
+
+    return buf;
 }

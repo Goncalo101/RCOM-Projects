@@ -133,9 +133,7 @@ int state_machine(char rec_byte) {
             return 1;
         } else if (rec_byte == ESCAPE) {
             state = ESC;
-        }
-
-        if (data_machine(rec_byte)) {
+        }else if (data_machine(rec_byte)) {
             state = CHECK_END_FLAG;
         }
 
