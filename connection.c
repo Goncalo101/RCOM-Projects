@@ -76,6 +76,7 @@ int send_packet(int fd, frame_t *frame){
     return llwrite(fd, frame_str, frame->length);
 }
 
+
 int check_cmd(int fd, char cmd_byte, char *cmd) {
     int bytes_read = 0; 
     while (cmd[2] != cmd_byte) {
@@ -86,6 +87,24 @@ int check_cmd(int fd, char cmd_byte, char *cmd) {
     }
 
     return bytes_read;
+}
+
+int get_packet(int fd, frame_t *frame) {
+    char *buffer = malloc(MAX_FRAGMENT_SIZE);
+    int bytes_read = llread(fd, buffer);
+
+    if (bytes_read == ERROR) {
+        return ERROR;
+    }
+
+    buffer = realloc(buffer, bytes_read);
+
+    switch (buffer[CTRL_POS]) {
+        case DATA_PACKET:break;
+        case START_PACKET:
+            sscanf(&buffer[CTRL_POS + 3], "%ld", &frame->file_info->file_size);
+            sscanf(&buffer[CTRL_POS + 12], "%s", frame->file_info->filename);
+    }
 }
 
 int send_set(int fd) {

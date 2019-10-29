@@ -5,6 +5,9 @@
         "stdbool.h": "c",
         "builders.h": "c",
         "flags.h": "c",
-        "strmanip.h": "c"
+        "strmanip.h": "c",
+        "application.h": "c",
+        "stdlib.h": "c",
+        "types.h": "c"
     }
 }

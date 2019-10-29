@@ -85,7 +85,6 @@ int send_file(char *filename) {
     prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
     if (send_packet(fd, &frame) == ERROR) return ERROR;
 
-
     free(file_fragment);
     free(packet.fragment);
 
