@@ -29,9 +29,9 @@ void int_to_string(off_t integer, char string[8]) {
 char *build_data_packet(char *fragment, size_t *length) {
     static char seq_no = 0;
 
-    *length += PACKET_HEAD_LEN + 1;
+    *length += PACKET_HEAD_LEN;
 
-    char *packet = malloc((*length) * sizeof(char));
+    char *packet = malloc((*length) * sizeof(char) + 1);
     printf ("\033[32;1m LENGTH / 255: %d, length: %d \033[0m\n", (*length) / 255, *length);
     sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (*length) / 255, (*length) % 255);
     memcpy(&packet[4], fragment, *length);
@@ -87,22 +87,34 @@ char *build_frame(frame_t *frame) {
     printf("BEFORE BYTE STUFFING: %d\n", frame->length);
     char esc_esc[3];
     sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
-
     packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
+
+    printf("after escape stuffing\n");
+    for(size_t i = 0; i < frame->length; ++i)
+        printf("packet[%d] = 0x%02x\n", i, packet[i]);
 
     char esc_flag[] = {ESCAPE, FLAG};
     packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
+        printf("after flag stuffing\n");
+    for(size_t i = 0; i < frame->length; ++i)
+        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+
     char esc_bcc[] = {ESCAPE, (char)bcc2};
     packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
+
+        printf("after bcc stuffing\n");
+    for(size_t i = 0; i < frame->length; ++i)
+        printf("packet[%d] = 0x%02x\n", i, packet[i]);
     printf("AFTER BYTE STUFFING: %d\n", frame->length);
     
+    for(size_t i = 0; i < frame->length; ++i)
+        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+
     memcpy(&frame_str[4], packet, frame->length);
     sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
     frame->length += FRAME_I_LENGTH;
 
-    for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%d] = 0x%02x\n", i, packet[i]);
 
 
     return frame_str;

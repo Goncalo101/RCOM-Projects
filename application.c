@@ -119,7 +119,7 @@ int receive_file(char *filename) {
 
     int fd = open("filename.gif", O_WRONLY | O_CREAT, 0777);
     buf = tmp_destuffar(buf, 10973);
-    write(fd, &buf[8], 10973);
+    write(fd, &buf[8], 20000);
     return 0;
 }
 
