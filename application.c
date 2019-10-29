@@ -92,12 +92,34 @@ int send_file(char *filename) {
     return 0;
 }
 
+/*
+    Mudar essas cenas, pelo menos funciona amem
+*/
+
+char *tmp_destuffar(char *str, size_t length){
+    char *buf = malloc(length);
+
+    for (size_t i = 0, j = 0; i < length; i++,j++)
+    {
+        if(str[j] == ESCAPE)
+            buf[i] = str[++j];
+        else buf[i] = str[j];
+        printf("DESTUFFAR[%d] = 0x%02x\n", i, buf[i]);
+    }
+    
+
+    return buf;
+}
+
 int receive_file(char *filename) {
-    char buf[10973];
+    char *buf = malloc(10973);
+    puts("READ NUMERO 1");
     llread(fd, buf);
+    puts("READ NUMERO 2");
     llread(fd, buf);
 
     int fd = open("filename.gif", O_WRONLY | O_CREAT, 0777);
+    buf = tmp_destuffar(buf, 10973);
     write(fd, &buf[8], 10973);
     return 0;
 }

@@ -9,7 +9,7 @@ char *str_replace(char *target, char needle, const char *replacement, size_t* le
     unsigned char *buffer = malloc(*length + 1);
     memcpy(buffer, target, *length);
     int counter = 0;
-
+    printf("LENGTH BEFORE REPL: %ld\n", *length);
 
     for (size_t i = 4; i < *length; i++) {
 
