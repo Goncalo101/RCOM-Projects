@@ -70,15 +70,6 @@ int llwrite(int fd, char *buffer, int length) {
     return bytes_written;
 }
 
-int send_packet(int fd, frame_t *frame){
-    char *frame_str = build_frame(frame);
-    
-    printf("FRAME: %s\n", frame_str);
-    
-    return llwrite(fd, frame_str, frame->length);
-}
-
-
 int check_cmd(int fd, char cmd_byte, char *cmd) {
     int bytes_read = 0; 
     while (cmd[2] != cmd_byte) {
@@ -89,6 +80,28 @@ int check_cmd(int fd, char cmd_byte, char *cmd) {
     }
 
     return bytes_read;
+}
+
+int send_packet(int fd, frame_t *frame) {
+    char *frame_str = build_frame(frame);
+    
+    printf("FRAME: %s\n", frame_str);
+    
+    int bytes_written = llwrite(fd, frame_str, frame->length);
+
+    frame_str = realloc(frame_str, TYPE_A_PACKET_LENGTH + 1);
+
+    char cmd;
+    if (frame->frame_ctrl == 0) {
+        cmd = 0x40;
+    } else if (frame->frame_ctrl == 0x40) {
+        cmd = 0x0;
+    }
+
+    check_cmd(fd, cmd, frame_str);
+    free(frame_str);
+
+    return bytes_written;
 }
 
 int string_to_int(unsigned char *string){
@@ -116,13 +129,29 @@ int get_packet(int fd, frame_t *frame) {
 
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:
-            len = buffer[5]*255 + buffer[6];
+            len = buffer[5] * 255 + buffer[6];
             buffer = rm_stuffing(&buffer[8], len);
-            break;
+            frame->length = len;
+            frame->packet->fragment = malloc(len);
+            memcpy(frame->packet->fragment, &buffer[8], len);
+            
+            char buf[TYPE_A_PACKET_LENGTH];
+            char cmd;
+            if (buffer[2] == 0) {
+                cmd = 0x40;
+            } else if (buffer[2] == 0x40) {
+                cmd = 0;
+            }
+
+            sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
+
+            llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
+            return frame->length;
         case START_PACKET:
             frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
             frame->file_info->filename = malloc(frame->file_info->file_size + 1);
             strncpy(frame->file_info->filename, &buffer[CTRL_POS + 13], bytes_read - CTRL_POS - 1 - SIZE_LENGTH - 4 - 2);
+            break;
     }
 
     return bytes_read;

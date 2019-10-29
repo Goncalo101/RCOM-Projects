@@ -83,8 +83,8 @@ int send_file(char *filename) {
         ++counter;
     }
 
-    prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
-    if (send_packet(fd, &frame) == ERROR) return ERROR;
+    // prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
+    // if (send_packet(fd, &frame) == ERROR) return ERROR;
 
     free(file_fragment);
     free(packet.fragment);
@@ -107,11 +107,12 @@ int receive_file(char *filename) {
     frame.packet = malloc(sizeof(packet_t));
     int file_desc = open("filename.gif", O_WRONLY | O_CREAT, 0777);
 
-    while(bytes_read < file_size){
-        bytes_read += get_packet(fd, &frame);
-        if (bytes_read == ERROR) exit(-1);
+    while (bytes_read < file_size) {
+        int read = get_packet(fd, &frame);
+        if (read == ERROR) exit(-1);
 
-        write(file_desc, &frame.packet->fragment[8], bytes_read);
+        write(file_desc, frame.packet->fragment, read);
+        bytes_read += read;
     }
 
     return 0;
