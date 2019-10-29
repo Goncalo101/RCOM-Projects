@@ -90,6 +90,18 @@ int check_cmd(int fd, char cmd_byte, char *cmd) {
     return bytes_read;
 }
 
+int string_to_int(unsigned char *string){
+    // TODO mudar de sitio vai p builder
+    off_t num = 0;
+    off_t mask = 0xff;
+
+    for(int i = 0; i < SIZE_LENGTH; ++i){
+        num += string[i] << ((7-i) * 8);
+    }
+
+    return num;
+}
+
 int get_packet(int fd, frame_t *frame) {
     char *buffer = malloc(MAX_FRAGMENT_SIZE);
     int bytes_read = llread(fd, buffer);
@@ -103,9 +115,9 @@ int get_packet(int fd, frame_t *frame) {
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:break;
         case START_PACKET:
-            sscanf(&buffer[CTRL_POS + 3], "%ld", &frame->file_info->file_size);
+            frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
             frame->file_info->filename = malloc(frame->file_info->file_size + 1);
-            strncpy(frame->file_info->filename, &buffer[CTRL_POS + 12], frame->file_info->file_size);
+            strncpy(frame->file_info->filename, &buffer[CTRL_POS + 13], bytes_read - CTRL_POS - 1 - SIZE_LENGTH - 4 - 2);
     }
 
     return bytes_read;
