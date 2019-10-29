@@ -11,6 +11,7 @@
 
 #include "utils/builders.h"
 #include "utils/state_machine.h"
+#include "utils/strmanip.h"
 #include "connection.h"
 #include "flags.h"
 
@@ -103,7 +104,7 @@ int string_to_int(unsigned char *string){
 }
 
 int get_packet(int fd, frame_t *frame) {
-    char *buffer = malloc(MAX_FRAGMENT_SIZE);
+    char *buffer = malloc(MAX_FRAGMENT_SIZE + 10);
     int bytes_read = llread(fd, buffer);
 
     if (bytes_read == ERROR) {
@@ -111,9 +112,15 @@ int get_packet(int fd, frame_t *frame) {
     }
 
     buffer = realloc(buffer, bytes_read);
+    size_t len;
+
+
 
     switch (buffer[CTRL_POS]) {
-        case DATA_PACKET:break;
+        case DATA_PACKET:
+            len = buffer[5]*255 + buffer[6];
+            buffer = rm_stuffing(&buffer[8], len);
+            break;
         case START_PACKET:
             frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
             frame->file_info->filename = malloc(frame->file_info->file_size + 1);

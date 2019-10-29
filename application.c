@@ -93,20 +93,25 @@ int send_file(char *filename) {
 }
 
 int receive_file(char *filename) {
-    unsigned char *buf = malloc(11077);
     frame_t frame;
     frame.file_info = malloc(sizeof(file_t));
     get_packet(fd, &frame);
+    //unsigned char *buf = malloc(MAX_FRAGMENT_SIZE);
 
     printf("received file size: %d, file name: %s\n", frame.file_info->file_size, frame.file_info->filename);
+    
+    off_t bytes_read = 0;
+    off_t file_size = frame.file_info->file_size;
+    free(frame.file_info);
 
-    // llread(fd, buf);
+    frame.packet = malloc(sizeof(packet_t));
+    int fd = open("filename.gif", O_WRONLY | O_CREAT, 0777);
 
-    // llread(fd, buf);
+    while(bytes_read < file_size){
+        bytes_read += get_packet(fd, &frame);
+        write(fd, &frame.packet->fragment[8], bytes_read);
+    }
 
-    // int fd = open("filename.gif", O_WRONLY | O_CREAT, 0777);
-    // buf = rm_stuffing(buf, 10973);
-    // write(fd, &buf[8], 10973);
     return 0;
 }
 
