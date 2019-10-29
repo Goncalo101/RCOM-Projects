@@ -1,5 +1,7 @@
 noncanonical
 .vscode/
+*.txt
+
 
 # Prerequisites
 *.d
