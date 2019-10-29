@@ -104,8 +104,11 @@ int get_packet(int fd, frame_t *frame) {
         case DATA_PACKET:break;
         case START_PACKET:
             sscanf(&buffer[CTRL_POS + 3], "%ld", &frame->file_info->file_size);
-            sscanf(&buffer[CTRL_POS + 12], "%s", frame->file_info->filename);
+            frame->file_info->filename = malloc(frame->file_info->file_size + 1);
+            strncpy(frame->file_info->filename, &buffer[CTRL_POS + 12], frame->file_info->file_size);
     }
+
+    return bytes_read;
 }
 
 int send_set(int fd) {
