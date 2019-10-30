@@ -48,29 +48,29 @@ int data_machine(char rec_byte) {
         }
         break;
     case TLV:
-        bcc2 = BCC(bcc2, rec_byte);
+        bcc2 = (BCC(bcc2, rec_byte));
         if (tlv_machine(rec_byte)) {
             state = BCC2_CHECK;
         }
         break;
     case SEQ_NO:
-        bcc2 = BCC(bcc2, rec_byte);
+        bcc2 = (BCC(bcc2, rec_byte));
         state = LENGTH;
         break;
     case LENGTH:
         if (length_counter == 2) {
-            bcc2 = BCC(bcc2, rec_byte);
+            bcc2 = (BCC(bcc2, rec_byte));
             length += rec_byte * 255;
             --length_counter;
         }
         else if (length_counter == 1) {
-            bcc2 = BCC(bcc2, rec_byte);
+            bcc2 = (BCC(bcc2, rec_byte));
             length += rec_byte;
             state = DATA;
         }
         break;
     case DATA:
-        bcc2 = BCC(bcc2, rec_byte);
+        bcc2 = (BCC(bcc2, rec_byte));
         ++counter;
         if (counter >= length) state = BCC2_CHECK;
         
@@ -119,7 +119,7 @@ int state_machine(char rec_byte) {
         else state = START;
         break;
     case C_RCV:
-        if (rec_byte == BCC(addr,cmd))
+        if (rec_byte == (BCC(addr, cmd)))
             state = BCC_OK;
         else if (rec_byte == FLAG)
             state = FLAG_RCV;

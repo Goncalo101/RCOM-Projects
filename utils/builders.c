@@ -32,8 +32,8 @@ char *build_data_packet(char *fragment, size_t *length) {
     *length += PACKET_HEAD_LEN;
 
     char *packet = malloc((*length) * sizeof(char) + 1);
-    printf ("\033[32;1m LENGTH / 255: %d, length: %d \033[0m\n", (*length) / 255, *length);
-    sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (*length) / 255, (*length) % 255);
+    printf ("LENGTH / 255: %d, length: %d", (char) ((*length) / 255), (char)(*length));
+    sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (char) ((*length) / 255), (char) ((*length) % 255));
     memcpy(&packet[4], fragment, *length);
 
     return packet;
@@ -55,7 +55,7 @@ char *build_control_packet(file_t *file_info, size_t *length, char ctrl) {
     memcpy(&ctrl_packet[3], file_size_buf, 8);
 
     char *filename_tlv = malloc(filename_len + 2);
-    sprintf(filename_tlv, "%c%c", FILE_NAME_PARAM, filename_len);
+    sprintf(filename_tlv, "%c%c", FILE_NAME_PARAM, (char) filename_len);
     memcpy(&filename_tlv[2], file_info->filename, filename_len);
     memcpy(&ctrl_packet[11], filename_tlv, filename_len + 2);
 
@@ -64,7 +64,7 @@ char *build_control_packet(file_t *file_info, size_t *length, char ctrl) {
 
 char *build_frame(frame_t *frame) {
     char *packet;
-    printf("building control packet with initial length %d\n", frame->length);
+    printf("building control packet with initial length %ld\n", frame->length);
     switch (frame->request_type) {
         case DATA_REQ:
             printf("building data packet\n");
@@ -77,39 +77,39 @@ char *build_frame(frame_t *frame) {
     }
 
     printf("control packet built\n");
-    printf("new length %d\n", frame->length);
+    printf("new length %ld\n", frame->length);
 
     int bcc2 = calc_bcc2(packet, frame->length);
     
     char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
-    printf("BEFORE BYTE STUFFING: %d\n", frame->length);
+    printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
     char esc_esc[3];
     sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
     packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
     printf("after escape stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
 
     char esc_flag[] = {ESCAPE, FLAG};
     packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
         printf("after flag stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
 
     char esc_bcc[] = {ESCAPE, (char)bcc2};
     packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
 
         printf("after bcc stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%d] = 0x%02x\n", i, packet[i]);
-    printf("AFTER BYTE STUFFING: %d\n", frame->length);
+        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
+    printf("AFTER BYTE STUFFING: %ld\n", frame->length);
     
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%d] = 0x%02x\n", i, packet[i]);
+        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
 
     memcpy(&frame_str[4], packet, frame->length);
     sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);

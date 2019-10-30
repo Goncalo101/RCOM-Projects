@@ -15,7 +15,6 @@
 #include "connection.h"
 #include "flags.h"
 
-static frame_t received_frame;
 static struct termios oldtio;
 
 int llread(int fd, char *buffer) {
@@ -110,7 +109,6 @@ int send_packet(int fd, frame_t *frame) {
 int string_to_int(unsigned char *string){
     // TODO mudar de sitio vai p builder
     off_t num = 0;
-    off_t mask = 0xff;
 
     for(int i = 0; i < SIZE_LENGTH; ++i){
         num += string[i] << ((7-i) * 8);
@@ -142,13 +140,13 @@ int get_packet(int fd, frame_t *frame) {
             break;
         case END_PACKET:
         case START_PACKET:
-            frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
+            frame->file_info->file_size = string_to_int((unsigned char*) &buffer[CTRL_POS+3]);
             frame->file_info->filename = malloc(frame->file_info->file_size + 1);
             strncpy(frame->file_info->filename, &buffer[CTRL_POS + 13], bytes_read - CTRL_POS - 1 - SIZE_LENGTH - 4 - 2);
             break;
     }
     
-    char buf[TYPE_A_PACKET_LENGTH];
+    char buf[TYPE_A_PACKET_LENGTH + 1];
     char cmd;
     if (buffer[2] == 0) {
         cmd = 0x40;
@@ -171,6 +169,8 @@ int send_set(int fd) {
 
     int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
 
+    if (bytes_written == ERROR) return ERROR;
+
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     bzero(ack_command, TYPE_A_PACKET_LENGTH + 1);
 
@@ -184,6 +184,8 @@ int send_ack(int fd) {
     bzero(set_command, TYPE_A_PACKET_LENGTH + 1);
 
     int bytes_read = check_cmd(fd, SET_CMD, set_command);
+
+    if (bytes_read == ERROR) return ERROR;
 
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(RECEIVER_ANS, UACK_CMD);
@@ -228,7 +230,7 @@ void terminal_setup(int fd) {
 }
 
 int llopen(int port, int mode) {
-    char device[10];
+    char device[22];
 
     sprintf(device, "/dev/ttyS%d", port);
     puts(device);

@@ -14,8 +14,8 @@ char *str_replace(char *target, char needle, const char *replacement, size_t* le
     for (size_t i = 4; i < *length; i++) {
         if (buffer[i] == needle) {
              ++counter;
-            printf("LENGTH: %d\n", *length);
-            buffer = (char *) realloc(buffer, ++(*length));
+            printf("LENGTH: %ld\n", *length);
+            buffer = (unsigned char *) realloc(buffer, ++(*length));
             memcpy(buffer + i + 1, buffer + i, (*length) - i - 1);
 
             buffer[i] = ESCAPE;
@@ -24,7 +24,7 @@ char *str_replace(char *target, char needle, const char *replacement, size_t* le
         }
     }
 
-    return buffer;
+    return (char *) (buffer);
 }
 
 
