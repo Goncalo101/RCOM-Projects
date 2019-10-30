@@ -20,7 +20,7 @@ static struct termios oldtio;
 
 int llread(int fd, char *buffer) {
     int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
-
+printf("reading stuff\n");
     do {
         alarm(TIMEOUT);
         res = read(fd, &buffer[bytes_read], sizeof(char));
@@ -36,7 +36,7 @@ int llread(int fd, char *buffer) {
         }
         alarm(0);
         
-        printf("read hex: 0x%x ascii:%u\n", buffer[bytes_read], buffer[bytes_read]);
+        printf(" |0x%02x| ", buffer[bytes_read], buffer[bytes_read]);
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
@@ -55,6 +55,7 @@ int llread(int fd, char *buffer) {
 int llwrite(int fd, char *buffer, int length) {
     int bytes_written = 0, res;
 
+    printf("writing stuff\n");
     for (; bytes_written < length; ++bytes_written) {
         res = write(fd, &buffer[bytes_written], sizeof(char));
         if (res == ERROR) {
@@ -62,7 +63,7 @@ int llwrite(int fd, char *buffer, int length) {
             return ERROR;
         }
 
-        printf("wrote hex: 0x%x ascii:%u\n", buffer[bytes_written], buffer[bytes_written]);
+        printf(" |0x%02x| ", buffer[bytes_written], buffer[bytes_written]);
     }
 
     printf("wrote %d bytes\n", bytes_written);
