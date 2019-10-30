@@ -91,25 +91,26 @@ char *build_frame(frame_t *frame) {
 
     printf("after escape stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
+        printf(" 0x%02x ", i, packet[i]);
 
     char esc_flag[] = {ESCAPE, FLAG};
     packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
         printf("after flag stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
+        printf(" 0x%02x ", i, packet[i]);
 
     char esc_bcc[] = {ESCAPE, (char)bcc2};
     packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
 
         printf("after bcc stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
+        printf(" 0x%02x", i, packet[i]);
+
     printf("AFTER BYTE STUFFING: %ld\n", frame->length);
     
     for(size_t i = 0; i < frame->length; ++i)
-        printf("packet[%ld] = 0x%02x\n", i, packet[i]);
+        printf(" 0x%02x ", i, packet[i]);
 
     memcpy(&frame_str[4], packet, frame->length);
     sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);

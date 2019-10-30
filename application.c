@@ -62,7 +62,7 @@ int send_file(char *filename) {
     packet_t packet;
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
 
-    while (total_read < file_size) {
+    while (total_read < 2000) {
         int bytes_read = read(file_desc, file_fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
         
