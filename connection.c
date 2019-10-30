@@ -71,6 +71,8 @@ int llwrite(int fd, char *buffer, int length) {
 }
 
 int check_cmd(int fd, char cmd_byte, char *cmd) {
+    static int count = 0;
+    printf("CMD COUNT: %d\n", ++count);
     int bytes_read = 0; 
     while (cmd[2] != cmd_byte) {
         bytes_read = llread(fd, cmd);
@@ -99,7 +101,7 @@ int send_packet(int fd, frame_t *frame) {
     }
 
     check_cmd(fd, cmd, packet);
-    free(frame_str);
+    //free(frame_str);
 
     return bytes_written;
 }
@@ -135,7 +137,7 @@ int get_packet(int fd, frame_t *frame) {
             frame->packet->fragment = malloc(len);
             memcpy(frame->packet->fragment, &buffer[8], len);
             bytes_read = len;
-            return frame->length;
+            break;
         case END_PACKET:
         case START_PACKET:
             frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);

@@ -36,7 +36,6 @@ char *rm_stuffing(char *str, size_t length){
         if(str[j] == ESCAPE)
             buf[i] = str[++j];
         else buf[i] = str[j];
-        printf("DESTUFFAR[%d] = 0x%02x\n", i, buf[i]);
     }
     
 
