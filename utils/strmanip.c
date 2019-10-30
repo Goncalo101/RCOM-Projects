@@ -5,7 +5,7 @@
 #include "../flags.h"
 #include "strmanip.h"
 
-char *str_replace(char *target, char needle, const char *replacement, size_t* length) {
+void str_replace(char *target, char needle, const char *replacement, size_t* length) {
     unsigned char *buffer = malloc(*length + 1);
     memcpy(buffer, target, *length);
     int counter = 0;
@@ -13,8 +13,8 @@ char *str_replace(char *target, char needle, const char *replacement, size_t* le
 
     for (size_t i = 4; i < *length; i++) {
         if (buffer[i] == needle) {
-             ++counter;
-            printf("LENGTH: %ld\n", *length);
+            ++counter;
+            printf("LENGTH: %d\n", *length);
             buffer = (unsigned char *) realloc(buffer, ++(*length));
             memcpy(buffer + i + 1, buffer + i, (*length) - i - 1);
 
@@ -24,7 +24,8 @@ char *str_replace(char *target, char needle, const char *replacement, size_t* le
         }
     }
 
-    return (char *) (buffer);
+    //memcpy(target, buffer, *length);
+    free(buffer);
 }
 
 
@@ -37,7 +38,7 @@ char *rm_stuffing(char *str, size_t length){
             buf[i] = str[++j];
         else buf[i] = str[j];
     }
-    
+
 
     return buf;
 }

@@ -15,11 +15,13 @@
 #include "connection.h"
 #include "flags.h"
 
+static frame_t received_frame;
 static struct termios oldtio;
+static int connection_mode = 0;
 
 int llread(int fd, char *buffer) {
     int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
-printf("reading stuff\n");
+
     do {
         alarm(TIMEOUT);
         res = read(fd, &buffer[bytes_read], sizeof(char));
@@ -34,14 +36,14 @@ printf("reading stuff\n");
             return ERROR;
         }
         alarm(0);
-        
-        printf(" %02x ", (unsigned char) buffer[bytes_read]);
+
+        printf("read hex: 0x%x ascii:%u\n", buffer[bytes_read], buffer[bytes_read]);
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
     printf("BYTES READ: 0x%02x %d\n", buffer[bytes_read-1], accept);
-    printf("accept %d\n", accept);
+
     if (alarm_count <= 0) {
         printf("Alarm limit reached.\n");
         return ERROR;
@@ -52,17 +54,17 @@ printf("reading stuff\n");
 }
 
 int llwrite(int fd, char *buffer, int length) {
-    int bytes_written = 0, res;
+    int bytes_written = 0, res, counter;
 
-    printf("writing stuff\n");
     for (; bytes_written < length; ++bytes_written) {
         res = write(fd, &buffer[bytes_written], sizeof(char));
+
         if (res == ERROR) {
             perror("write error");
             return ERROR;
         }
 
-        printf(" %02x ", (unsigned char) buffer[bytes_written]);
+        printf("wrote hex: 0x%x ascii:%u\n", buffer[bytes_written], buffer[bytes_written]);
     }
 
     printf("wrote %d bytes\n", bytes_written);
@@ -73,7 +75,7 @@ int llwrite(int fd, char *buffer, int length) {
 int check_cmd(int fd, char cmd_byte, char *cmd) {
     static int count = 0;
     printf("CMD COUNT: %d\n", ++count);
-    int bytes_read = 0; 
+    int bytes_read = 0;
     while (cmd[2] != cmd_byte) {
         bytes_read = llread(fd, cmd);
         if (bytes_read == ERROR) {
@@ -86,12 +88,12 @@ int check_cmd(int fd, char cmd_byte, char *cmd) {
 
 int send_packet(int fd, frame_t *frame) {
     char *frame_str = build_frame(frame);
-    
+
     printf("FRAME: %s\n", frame_str);
-    
+
     int bytes_written = llwrite(fd, frame_str, frame->length);
 
-    char *packet = malloc(TYPE_A_PACKET_LENGTH + 1);
+    //char *packet = malloc(TYPE_A_PACKET_LENGTH + 1);
 
     char cmd;
     if (frame->frame_ctrl == 0) {
@@ -100,7 +102,7 @@ int send_packet(int fd, frame_t *frame) {
         cmd = 0x0;
     }
 
-    check_cmd(fd, cmd, packet);
+    check_cmd(fd, cmd, frame->packet);
     //free(frame_str);
 
     return bytes_written;
@@ -109,6 +111,7 @@ int send_packet(int fd, frame_t *frame) {
 int string_to_int(unsigned char *string){
     // TODO mudar de sitio vai p builder
     off_t num = 0;
+    off_t mask = 0xff;
 
     for(int i = 0; i < SIZE_LENGTH; ++i){
         num += string[i] << ((7-i) * 8);
@@ -130,7 +133,7 @@ int get_packet(int fd, frame_t *frame) {
 
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:
-            len = buffer[6] * 255 + buffer[7];  
+            len = buffer[6] * 255 + buffer[7];
             buffer = rm_stuffing(buffer, len);
             frame->length = len;
             frame->packet->fragment = malloc(len);
@@ -140,13 +143,13 @@ int get_packet(int fd, frame_t *frame) {
             break;
         case END_PACKET:
         case START_PACKET:
-            frame->file_info->file_size = string_to_int((unsigned char*) &buffer[CTRL_POS+3]);
+            frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
             frame->file_info->filename = malloc(frame->file_info->file_size + 1);
             strncpy(frame->file_info->filename, &buffer[CTRL_POS + 13], bytes_read - CTRL_POS - 1 - SIZE_LENGTH - 4 - 2);
             break;
     }
-    
-    char buf[TYPE_A_PACKET_LENGTH + 1];
+
+    char buf[TYPE_A_PACKET_LENGTH];
     char cmd;
     if (buffer[2] == 0) {
         cmd = 0x40;
@@ -169,8 +172,6 @@ int send_set(int fd) {
 
     int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
 
-    if (bytes_written == ERROR) return ERROR;
-
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     bzero(ack_command, TYPE_A_PACKET_LENGTH + 1);
 
@@ -185,11 +186,9 @@ int send_ack(int fd) {
 
     int bytes_read = check_cmd(fd, SET_CMD, set_command);
 
-    if (bytes_read == ERROR) return ERROR;
-
     char ack_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(RECEIVER_ANS, UACK_CMD);
-    
+
     sprintf(ack_command, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, bcc, FLAG);
 
     int bytes_written = llwrite(fd, ack_command, TYPE_A_PACKET_LENGTH);
@@ -216,7 +215,7 @@ void terminal_setup(int fd) {
     newtio.c_lflag = 0;
 
     newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-    newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
+    newtio.c_cc[VMIN] = 5;  /* blocking read until 5 chars received */
 
     tcflush(fd, TCIOFLUSH);
 
@@ -230,7 +229,7 @@ void terminal_setup(int fd) {
 }
 
 int llopen(int port, int mode) {
-    char device[22];
+    char device[10];
 
     sprintf(device, "/dev/ttyS%d", port);
     puts(device);
@@ -247,4 +246,26 @@ int llopen(int port, int mode) {
     functions[mode](fd);
 
     return fd;
+}
+
+int llclose(int fd) {
+  close(fd);
+  char buffer[TYPE_A_PACKET_LENGTH + 1];
+  int bytes_written = 0;
+  switch (connection_mode) {
+    case 0:
+      sprintf(buffer, "%c%c%c%c%c", FLAG, SENDER_CMD, 0xb, BCC(SENDER_CMD, 0xb), FLAG);
+      bytes_written+=llwrite(fd, buffer, TYPE_A_PACKET_LENGTH);
+      check_cmd(fd, 0xb, buffer);
+      sprintf(buffer, "%c%c%c%c%c", FLAG, SENDER_CMD, UACK_CMD, BCC(SENDER_CMD, UACK_CMD), FLAG);
+      bytes_written+=llwrite(fd, buffer, TYPE_A_PACKET_LENGTH);
+      break;
+    case 1:
+      sprintf(buffer, "%c%c%c%c%c", FLAG, SENDER_CMD, 0xb, BCC(SENDER_CMD, 0xb), FLAG);
+      bytes_written+=llwrite(fd, buffer, TYPE_A_PACKET_LENGTH);
+      check_cmd(fd, UACK_CMD, buffer);
+      break;
+  }
+
+  return bytes_written;
 }

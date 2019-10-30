@@ -43,14 +43,14 @@ int send_file(char *filename) {
     prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, START_PACKET, control[counter % 2]);
     ++counter;
 
-    printf("sending %s (name length %ld, file size %ld)\n", frame.file_info->filename, frame.length, file_size);
+    printf("sending %s (name length %d, file size %ld)\n", frame.file_info->filename, frame.length, file_size);
 
     // send frame
     if (send_packet(fd, &frame) == ERROR) return ERROR;
 
     // send file
     off_t total_read = 0;
-    int bytes_written;
+    int bytes_written = 0;
 
     char *file_fragment = malloc(MAX_FRAGMENT_SIZE);
 
@@ -58,20 +58,20 @@ int send_file(char *filename) {
     frame.request_type = DATA_REQ;
     frame.packet_ctrl = DATA_PACKET;
     frame.addr = SENDER_CMD;
-    
+
     packet_t packet;
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
 
-    while (total_read < 2000) {
+    while (total_read < file_size) {
         int bytes_read = read(file_desc, file_fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
-        
+
         if (bytes_read < MAX_FRAGMENT_SIZE)
             file_fragment = realloc(file_fragment, bytes_read);
 
         if (bytes_read == ERROR) perror("ERRO");
-        printf("BYTES READ: %ld\n", total_read);
-        
+        printf("BYTES READ: %d\n", total_read);
+
         packet.fragment = realloc(packet.fragment, bytes_read);
         memcpy(packet.fragment, file_fragment, bytes_read);
 
@@ -80,16 +80,14 @@ int send_file(char *filename) {
         frame.frame_ctrl = control[counter % 2];
 
         bytes_written = send_packet(fd, &frame);
-
-        if (bytes_written == ERROR) return ERROR;
         ++counter;
     }
 
     // prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
     // if (send_packet(fd, &frame) == ERROR) return ERROR;
 
-    //free(file_fragment);
-    //free(packet.fragment);
+    // free(file_fragment);
+    // free(packet.fragment);
 
     return 0;
 }
@@ -99,8 +97,8 @@ int receive_file(char *filename) {
     frame.file_info = malloc(sizeof(file_t));
     get_packet(fd, &frame);
 
-    printf("received file size: %ld, file name: %s\n", frame.file_info->file_size, frame.file_info->filename);
-    
+    printf("received file size: %d, file name: %s\n", frame.file_info->file_size, frame.file_info->filename);
+
     off_t bytes_read = 0;
     off_t file_size = frame.file_info->file_size;
     free(frame.file_info);
@@ -126,4 +124,3 @@ void start_app(int port, int mode, char *filename) {
         exit(-1);
     }
 }
-
