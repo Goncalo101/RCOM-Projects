@@ -36,13 +36,13 @@ printf("reading stuff\n");
         }
         alarm(0);
         
-        printf(" |0x%02x| ", buffer[bytes_read], buffer[bytes_read]);
+        printf(" %02x ", (unsigned char) buffer[bytes_read]);
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
     printf("BYTES READ: 0x%02x %d\n", buffer[bytes_read-1], accept);
-
+    printf("accept %d\n", accept);
     if (alarm_count <= 0) {
         printf("Alarm limit reached.\n");
         return ERROR;
@@ -63,7 +63,7 @@ int llwrite(int fd, char *buffer, int length) {
             return ERROR;
         }
 
-        printf(" |0x%02x| ", buffer[bytes_written], buffer[bytes_written]);
+        printf(" %02x ", (unsigned char) buffer[bytes_written]);
     }
 
     printf("wrote %d bytes\n", bytes_written);
@@ -214,7 +214,7 @@ void terminal_setup(int fd) {
     newtio.c_lflag = 0;
 
     newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-    newtio.c_cc[VMIN] = 5;  /* blocking read until 5 chars received */
+    newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
 
     tcflush(fd, TCIOFLUSH);
 
