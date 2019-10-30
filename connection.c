@@ -34,14 +34,14 @@ int llread(int fd, char *buffer) {
             perror("read failed");
             return ERROR;
         }
+        alarm(0);
         
         printf("read hex: 0x%x ascii:%u\n", buffer[bytes_read], buffer[bytes_read]);
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
-    printf("oioioioi: 0x%02x %d\n", buffer[bytes_read-1], accept);
-    alarm(0);
+    printf("BYTES READ: 0x%02x %d\n", buffer[bytes_read-1], accept);
 
     if (alarm_count <= 0) {
         printf("Alarm limit reached.\n");
@@ -89,7 +89,7 @@ int send_packet(int fd, frame_t *frame) {
     
     int bytes_written = llwrite(fd, frame_str, frame->length);
 
-    frame_str = realloc(frame_str, TYPE_A_PACKET_LENGTH + 1);
+    char *packet = malloc(TYPE_A_PACKET_LENGTH + 1);
 
     char cmd;
     if (frame->frame_ctrl == 0) {
@@ -98,7 +98,7 @@ int send_packet(int fd, frame_t *frame) {
         cmd = 0x0;
     }
 
-    check_cmd(fd, cmd, frame_str);
+    check_cmd(fd, cmd, packet);
     free(frame_str);
 
     return bytes_written;
@@ -129,13 +129,14 @@ int get_packet(int fd, frame_t *frame) {
 
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:
-            len = buffer[5] * 255 + buffer[6];
-            buffer = rm_stuffing(&buffer[8], len);
+            len = buffer[6] * 255 + buffer[7];  
+            buffer = rm_stuffing(buffer, len);
             frame->length = len;
             frame->packet->fragment = malloc(len);
             memcpy(frame->packet->fragment, &buffer[8], len);
-            
+            bytes_read = len;
             return frame->length;
+        case END_PACKET:
         case START_PACKET:
             frame->file_info->file_size = string_to_int(&buffer[CTRL_POS+3]);
             frame->file_info->filename = malloc(frame->file_info->file_size + 1);
