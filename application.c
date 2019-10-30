@@ -86,8 +86,8 @@ int send_file(char *filename) {
     // prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
     // if (send_packet(fd, &frame) == ERROR) return ERROR;
 
-    free(file_fragment);
-    free(packet.fragment);
+    //free(file_fragment);
+    //free(packet.fragment);
 
     return 0;
 }
@@ -96,7 +96,6 @@ int receive_file(char *filename) {
     frame_t frame;
     frame.file_info = malloc(sizeof(file_t));
     get_packet(fd, &frame);
-    //unsigned char *buf = malloc(MAX_FRAGMENT_SIZE);
 
     printf("received file size: %d, file name: %s\n", frame.file_info->file_size, frame.file_info->filename);
     
@@ -105,7 +104,7 @@ int receive_file(char *filename) {
     free(frame.file_info);
 
     frame.packet = malloc(sizeof(packet_t));
-    int file_desc = open("filename.gif", O_WRONLY | O_CREAT, 0777);
+    int file_desc = open(filename, O_WRONLY | O_CREAT, 0777);
 
     while (bytes_read < file_size) {
         int read = get_packet(fd, &frame);

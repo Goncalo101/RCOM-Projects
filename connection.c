@@ -135,6 +135,7 @@ int get_packet(int fd, frame_t *frame) {
             buffer = rm_stuffing(buffer, len);
             frame->length = len;
             frame->packet->fragment = malloc(len);
+            // verificar aqui
             memcpy(frame->packet->fragment, &buffer[8], len);
             bytes_read = len;
             break;
