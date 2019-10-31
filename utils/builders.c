@@ -63,7 +63,7 @@ char *build_control_packet(file_t *file_info, size_t *length, char ctrl) {
 }
 
 char *build_frame(frame_t *frame) {
-    char *packet;
+    unsigned char *packet;
     printf("building control packet with initial length %ld\n", frame->length);
     switch (frame->request_type) {
         case DATA_REQ:
@@ -84,39 +84,40 @@ char *build_frame(frame_t *frame) {
     char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
-    printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
-    char esc_esc[3];
-    sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
-    packet=str_replace(packet, ESCAPE, esc_esc, &(frame->length));
+    if (frame->request_type == DATA_REQ) {
+      printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
+      char esc_esc[3];
+      sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
+      packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
-    printf("after escape stuffing\n");
-    for(size_t i = 0; i < frame->length; ++i)
-        printf(" %02x ", (unsigned char) packet[i]);
+      printf("after escape stuffing\n");
+      for(size_t i = 0; i < frame->length; ++i)
+          printf(" %02x ", (unsigned char) packet[i]);
 
-    char esc_flag[] = {ESCAPE, FLAG};
-    packet=str_replace(packet, FLAG, esc_flag, &(frame->length));
+      char esc_flag[] = {ESCAPE, FLAG};
+      packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
-        printf("after flag stuffing\n");
-    for(size_t i = 0; i < frame->length; ++i)
-        printf(" %02x ", (unsigned char) packet[i]);
+          printf("after flag stuffing\n");
+      for(size_t i = 0; i < frame->length; ++i)
+          printf(" %02x ", (unsigned char) packet[i]);
 
-    char esc_bcc[] = {ESCAPE, (char)bcc2};
-    packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
+      char esc_bcc[] = {ESCAPE, (char)bcc2};
+      packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
 
-    printf("after bcc stuffing\n");
-    for(size_t i = 0; i < frame->length; ++i)
-        printf(" %02x", (unsigned char) packet[i]);
+      printf("after bcc stuffing\n");
+      for(size_t i = 0; i < frame->length; ++i)
+          printf(" %02x", (unsigned char) packet[i]);
 
-    printf("AFTER BYTE STUFFING: %ld\n", frame->length);
+      printf("AFTER BYTE STUFFING: %ld\n", frame->length);
 
-    for(size_t i = 0; i < frame->length; ++i)
-        printf(" %02x ", (unsigned char) packet[i]);
+      for(size_t i = 0; i < frame->length; ++i)
+          printf(" %02x ", (unsigned char) packet[i]);
+    }
+
 
     memcpy(&frame_str[4], packet, frame->length);
     sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
     frame->length += FRAME_I_LENGTH;
-
-
 
     return frame_str;
 }

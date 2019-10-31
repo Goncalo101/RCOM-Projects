@@ -5,30 +5,51 @@
 #include "../flags.h"
 #include "strmanip.h"
 
-char *str_replace(char *target, char needle, const char *replacement, size_t* length) {
-    char *buffer = malloc(*length + 1);
-	bzero(buffer, *length);
-    memcpy(buffer, target, *length);
-    int counter = 0;
+unsigned char *str_replace(unsigned char *target, char needle, const char *replacement, size_t* length) {
+    int original_length = *length;
+    unsigned char *buffer = malloc(2 * original_length);
+    bzero(buffer, original_length);
+    memcpy(buffer, target, 4);
+
     printf("LENGTH BEFORE REPL: %ld\n", *length);
 
-    for (size_t i = 4; i < *length; i++) {
-        if (buffer[i] == needle) {
-            ++counter;
-            printf("LENGTH: %d\n", *length);
-            buffer = (char *) realloc(buffer, ++(*length));
-            memcpy(buffer + i + 1, buffer + i, (*length) - i - 1);
-
-            buffer[i] = ESCAPE;
-
-            i++;
-        }
+    for (size_t i = 4, j = 4; i < original_length; ++i, ++j) {
+      if (target[i] == needle) {
+          ++(*length);
+          memcpy(&buffer[j], replacement, strlen(replacement));
+          ++j;
+      } else {
+        memcpy(&buffer[j], &target[i], 1);
+      }
     }
 
-    //memcpy(target, buffer, *length);
-    //free(buffer);
-	return (char*)buffer;
+    buffer = realloc(buffer, *length);
+  // for (size_t i = 4; i < original_length; ++i) {
+  //   for (size_t j = i + 1; j < original_length - 1; ++j) {
+  //     if (target[j] == needle) {
+  //       buffer = realloc(buffer, ++(*length));
+  //       memcpy(&buffer[i], &target[i], j - i);
+  //       memcpy(&buffer[j], replacement, strlen(replacement));
+  //       i = j + 2;
+  //       break;
+  //     }
+  //   }
+  // }
+
+	return buffer;
 }
+//   for (size_t i = 4, j = 0; i < *length; i++, j++) {
+//       if (target[i] == needle) {
+//           printf("LENGTH: %d\n", *length);
+//           buffer = realloc(buffer, ++(*length));
+//           memcpy(&buffer[i + 1], &buffer[i], (*length) - i - 1);
+//
+//           buffer[i] = ESCAPE;
+//
+//           i++;
+//       }
+//   }
+// //target = realloc(target, *length);
 
 
 char *rm_stuffing(char *str, size_t length){

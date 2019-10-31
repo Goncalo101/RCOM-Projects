@@ -249,7 +249,7 @@ int llopen(int port, int mode) {
 }
 
 int llclose(int fd) {
-  close(fd);
+
   char buffer[TYPE_A_PACKET_LENGTH + 1];
   int bytes_written = 0;
   switch (connection_mode) {
@@ -266,6 +266,6 @@ int llclose(int fd) {
       check_cmd(fd, UACK_CMD, buffer);
       break;
   }
-
+  close(fd);
   return bytes_written;
 }
