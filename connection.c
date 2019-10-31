@@ -19,12 +19,12 @@ static frame_t received_frame;
 static struct termios oldtio;
 static int connection_mode = 0;
 
-int llread(int fd, char *buffer) {
+int llread(int fd, unsigned char *buffer) {
     int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
 
     do {
         alarm(TIMEOUT);
-        res = read(fd, &buffer[bytes_read], sizeof(char));
+        res = read(fd, &buffer[bytes_read], sizeof(unsigned char));
         if (res == ERROR) {
             if (errno == EINTR) {
                 --alarm_count;
@@ -53,11 +53,11 @@ int llread(int fd, char *buffer) {
     return bytes_read;
 }
 
-int llwrite(int fd, char *buffer, int length) {
+int llwrite(int fd, unsigned char *buffer, int length) {
     int bytes_written = 0, res, counter;
 
     for (; bytes_written < length; ++bytes_written) {
-        res = write(fd, &buffer[bytes_written], sizeof(char));
+        res = write(fd, &buffer[bytes_written], sizeof(unsigned char));
 
         if (res == ERROR) {
             perror("write error");
@@ -72,7 +72,7 @@ int llwrite(int fd, char *buffer, int length) {
     return bytes_written;
 }
 
-int check_cmd(int fd, char cmd_byte, char *cmd) {
+int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
     static int count = 0;
     printf("CMD COUNT: %d\n", ++count);
     int bytes_read = 0;
@@ -87,22 +87,22 @@ int check_cmd(int fd, char cmd_byte, char *cmd) {
 }
 
 int send_packet(int fd, frame_t *frame) {
-    char *frame_str = build_frame(frame);
+    unsigned char *frame_str = build_frame(frame);
 
     printf("FRAME: %s\n", frame_str);
 
     int bytes_written = llwrite(fd, frame_str, frame->length);
 
-    //char *packet = malloc(TYPE_A_PACKET_LENGTH + 1);
+    //unsigned char *packet = malloc(TYPE_A_PACKET_LENGTH + 1);
 
-    char cmd;
+    unsigned char cmd;
     if (frame->frame_ctrl == 0) {
         cmd = 0x40;
     } else if (frame->frame_ctrl == 0x40) {
         cmd = 0x0;
     }
-
-    check_cmd(fd, cmd, frame->packet);
+    
+    check_cmd(fd, cmd, frame_str);
     //free(frame_str);
 
     return bytes_written;
@@ -120,7 +120,7 @@ int string_to_int(unsigned char *string){
 }
 
 int get_packet(int fd, frame_t *frame) {
-    char *buffer = malloc(MAX_FRAGMENT_SIZE + 10);
+    unsigned char *buffer = malloc(MAX_FRAGMENT_SIZE + 10);
     int bytes_read = llread(fd, buffer);
 
     if (bytes_read == ERROR) {
@@ -134,11 +134,11 @@ int get_packet(int fd, frame_t *frame) {
         case DATA_PACKET:
             len = buffer[6] * 255 + buffer[7];
             printf("asdasdasdasdasdasdasd %d\n", len);
-            buffer = rm_stuffing(buffer, len);
+            buffer = rm_stuffing(buffer, len+6);
             frame->length = len;
-            frame->packet->fragment = malloc(len);
+            frame->packet->fragment = malloc(len - 4);
             // verificar aqui
-            memcpy(frame->packet->fragment, &buffer[8], len);
+            memcpy(frame->packet->fragment, &buffer[8], len - 4);
             bytes_read = len;
             break;
         case END_PACKET:
@@ -149,8 +149,8 @@ int get_packet(int fd, frame_t *frame) {
             break;
     }
 
-    char buf[TYPE_A_PACKET_LENGTH];
-    char cmd;
+    unsigned char buf[TYPE_A_PACKET_LENGTH];
+    unsigned char cmd;
     if (buffer[2] == 0) {
         cmd = 0x40;
     } else if (buffer[2] == 0x40) {
@@ -165,14 +165,14 @@ int get_packet(int fd, frame_t *frame) {
 }
 
 int send_set(int fd) {
-    char set_command[TYPE_A_PACKET_LENGTH + 1];
+    unsigned char set_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(SENDER_CMD, SET_CMD);
 
     sprintf(set_command, "%c%c%c%c%c", FLAG, SENDER_CMD, SET_CMD, bcc, FLAG);
 
     int bytes_written = llwrite(fd, set_command, TYPE_A_PACKET_LENGTH);
 
-    char ack_command[TYPE_A_PACKET_LENGTH + 1];
+    unsigned char ack_command[TYPE_A_PACKET_LENGTH + 1];
     bzero(ack_command, TYPE_A_PACKET_LENGTH + 1);
 
     int bytes_read = check_cmd(fd, UACK_CMD, ack_command);
@@ -181,12 +181,12 @@ int send_set(int fd) {
 }
 
 int send_ack(int fd) {
-    char set_command[TYPE_A_PACKET_LENGTH + 1];
+    unsigned char set_command[TYPE_A_PACKET_LENGTH + 1];
     bzero(set_command, TYPE_A_PACKET_LENGTH + 1);
 
     int bytes_read = check_cmd(fd, SET_CMD, set_command);
 
-    char ack_command[TYPE_A_PACKET_LENGTH + 1];
+    unsigned char ack_command[TYPE_A_PACKET_LENGTH + 1];
     int bcc = BCC(RECEIVER_ANS, UACK_CMD);
 
     sprintf(ack_command, "%c%c%c%c%c", FLAG, RECEIVER_ANS, UACK_CMD, bcc, FLAG);
@@ -214,8 +214,8 @@ void terminal_setup(int fd) {
     /* set input mode (non-canonical, no echo,...) */
     newtio.c_lflag = 0;
 
-    newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-    newtio.c_cc[VMIN] = 5;  /* blocking read until 5 chars received */
+    newtio.c_cc[VTIME] = 0; /* inter-unsigned character timer unused */
+    newtio.c_cc[VMIN] = 5;  /* blocking read until 5 unsigned chars received */
 
     tcflush(fd, TCIOFLUSH);
 
@@ -229,7 +229,7 @@ void terminal_setup(int fd) {
 }
 
 int llopen(int port, int mode) {
-    char device[10];
+    unsigned char device[10];
 
     sprintf(device, "/dev/ttyS%d", port);
     puts(device);
@@ -250,7 +250,7 @@ int llopen(int port, int mode) {
 
 int llclose(int fd) {
 
-  char buffer[TYPE_A_PACKET_LENGTH + 1];
+  unsigned char buffer[TYPE_A_PACKET_LENGTH + 1];
   int bytes_written = 0;
   switch (connection_mode) {
     case 0:

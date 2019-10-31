@@ -23,7 +23,7 @@ off_t get_file_size(int fd) {
     return file_stat.st_size;
 }
 
-int send_file(char *filename) {
+int send_file(unsigned char *filename) {
     // open file and check for errors
     int file_desc = open(filename, O_RDONLY, 0777);
 
@@ -38,7 +38,7 @@ int send_file(char *filename) {
 
     // build frame structure
     frame_t frame;
-    char control[2] = {0, 0x40};
+    unsigned char control[2] = {0, 0x40};
     int counter = 0;
     prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, START_PACKET, control[counter % 2]);
     ++counter;
@@ -52,7 +52,7 @@ int send_file(char *filename) {
     off_t total_read = 0;
     int bytes_written = 0;
 
-    char *file_fragment = malloc(MAX_FRAGMENT_SIZE);
+    unsigned char *file_fragment = malloc(MAX_FRAGMENT_SIZE);
 
     // prepare data frame
     frame.request_type = DATA_REQ;
@@ -94,7 +94,7 @@ int send_file(char *filename) {
     return 0;
 }
 
-int receive_file(char *filename) {
+int receive_file(unsigned char *filename) {
     frame_t frame;
     frame.file_info = malloc(sizeof(file_t));
     get_packet(fd, &frame);
@@ -112,14 +112,14 @@ int receive_file(char *filename) {
         int read = get_packet(fd, &frame);
         if (read == ERROR) exit(-1);
 
-        write(file_desc, frame.packet->fragment, read);
+        write(file_desc, frame.packet->fragment, read-4);
         bytes_read += read;
     }
 
     return 0;
 }
 
-void start_app(int port, int mode, char *filename) {
+void start_app(int port, int mode, unsigned char *filename) {
     fd = llopen(port, mode);
     if (fd == -1) {
         perror("llopen error");

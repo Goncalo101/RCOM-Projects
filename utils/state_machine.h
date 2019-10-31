@@ -27,6 +27,6 @@ typedef enum {
     MACHINE_STOP
 } machine_state;
 
-int state_machine(char rec_byte);
+int state_machine(unsigned char rec_byte);
 
 #endif

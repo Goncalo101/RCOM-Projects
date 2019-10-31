@@ -8,6 +8,7 @@
         "strmanip.h": "c",
         "application.h": "c",
         "stdlib.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "unistd.h": "c"
     }
 }

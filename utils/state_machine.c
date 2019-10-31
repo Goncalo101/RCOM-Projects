@@ -3,10 +3,10 @@
 #include "../flags.h"
 #include "state_machine.h"
 
-int tlv_machine(char rec_byte) {
+int tlv_machine(unsigned char rec_byte) {
     static tlv_state state = TYPE;
-    static char length_counter = 0;
-    static char tlv_counter = 2;
+    static unsigned char length_counter = 0;
+    static unsigned char tlv_counter = 2;
 
     switch (state) {
     case TYPE:
@@ -35,7 +35,7 @@ int tlv_machine(char rec_byte) {
     return 0;
 }
 
-int data_machine(char rec_byte) {
+int data_machine(unsigned char rec_byte) {
     static data_state state = CTRL_FLD;
     static int bcc2 = 0;
     static int length_counter = 2, counter = 0;
@@ -102,9 +102,9 @@ int data_machine(char rec_byte) {
     return 0;
 }
 
-int state_machine(char rec_byte) {
+int state_machine(unsigned char rec_byte) {
     static machine_state state = START;
-    static char cmd = 0, addr = 0;
+    static unsigned char cmd = 0, addr = 0;
     
     switch (state) {
     case START:

@@ -8,15 +8,15 @@ typedef enum {
 
 typedef struct {
     off_t file_size;
-    char *filename;
+    unsigned char *filename;
 } file_t;
 
 typedef struct {
-    char *fragment;
+    unsigned char *fragment;
 } packet_t;
 
 typedef struct {
-    char packet_ctrl, frame_ctrl, addr;
+    unsigned char packet_ctrl, frame_ctrl, addr;
     request_t request_type;
     size_t length;
     union {
