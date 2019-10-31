@@ -1,11 +1,11 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#define BAUDRATE B38400
+#define BAUDRATE B57600
 #define MAX_FRAGMENT_SIZE 65536
 
 #define MAX_ALARM_COUNT 3
-#define TIMEOUT 10
+#define TIMEOUT 60
 #define CTRL_POS 4
 
 #define INTERRUPTED -2
