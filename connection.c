@@ -35,13 +35,13 @@ int llread(int fd, char *buffer) {
             perror("read failed");
             return ERROR;
         }
-        alarm(0);
 
         printf("read hex: 0x%x ascii:%u\n", buffer[bytes_read], buffer[bytes_read]);
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
+    alarm(0);
     printf("BYTES READ: 0x%02x %d\n", buffer[bytes_read-1], accept);
 
     if (alarm_count <= 0) {
@@ -111,7 +111,6 @@ int send_packet(int fd, frame_t *frame) {
 int string_to_int(unsigned char *string){
     // TODO mudar de sitio vai p builder
     off_t num = 0;
-    off_t mask = 0xff;
 
     for(int i = 0; i < SIZE_LENGTH; ++i){
         num += string[i] << ((7-i) * 8);
@@ -134,6 +133,7 @@ int get_packet(int fd, frame_t *frame) {
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:
             len = buffer[6] * 255 + buffer[7];
+            printf("asdasdasdasdasdasdasd %d\n", len);
             buffer = rm_stuffing(buffer, len);
             frame->length = len;
             frame->packet->fragment = malloc(len);

@@ -5,7 +5,7 @@
 #define MAX_FRAGMENT_SIZE 65536
 
 #define MAX_ALARM_COUNT 3
-#define TIMEOUT 3
+#define TIMEOUT 10
 #define CTRL_POS 4
 
 #define INTERRUPTED -2

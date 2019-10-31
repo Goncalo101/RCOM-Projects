@@ -22,6 +22,9 @@ int tlv_machine(char rec_byte) {
             state = TYPE;
             --tlv_counter;
             if (tlv_counter == 0) {
+                state = TYPE;
+                length_counter = 0;
+                tlv_counter = 2;
                 return 1;
             }
         } 
@@ -36,7 +39,9 @@ int data_machine(char rec_byte) {
     static data_state state = CTRL_FLD;
     static int bcc2 = 0;
     static int length_counter = 2, counter = 0;
-    static int length = 0;
+    static unsigned int length = 0;
+
+    printf("\n data machine state: %d\n", state);
 
     switch (state) {
     case CTRL_FLD:
@@ -60,12 +65,14 @@ int data_machine(char rec_byte) {
     case LENGTH:
         if (length_counter == 2) {
             bcc2 = (BCC(bcc2, rec_byte));
-            length += rec_byte * 255;
+            length += ((unsigned int)(rec_byte) * 255);
+            printf("received length %d (no remainder), rec_byte %02x\n", length, (unsigned char) rec_byte);
             --length_counter;
         }
         else if (length_counter == 1) {
             bcc2 = (BCC(bcc2, rec_byte));
-            length += rec_byte;
+            length += (unsigned int) (rec_byte);
+            printf("received remainder %d, rec_byte %02x\n", length, (unsigned char) rec_byte);
             state = DATA;
         }
         break;
@@ -76,13 +83,17 @@ int data_machine(char rec_byte) {
         
         break;
     case BCC2_CHECK:
-        if (bcc2 != rec_byte)
-            return -1;
         state = CTRL_FLD;
-        bcc2 = 0;
         length_counter = 2;
         counter = 0;
         length = 0;
+        if (bcc2 != rec_byte) {
+            printf("COUNTER: %d\n", counter);
+            puts("bcc 2 error");
+            bcc2 = 0;
+            return -1;
+        }
+        bcc2 = 0;
         return 1;
     default:
         break;

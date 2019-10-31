@@ -24,38 +24,15 @@ unsigned char *str_replace(unsigned char *target, char needle, const char *repla
     }
 
     buffer = realloc(buffer, *length);
-  // for (size_t i = 4; i < original_length; ++i) {
-  //   for (size_t j = i + 1; j < original_length - 1; ++j) {
-  //     if (target[j] == needle) {
-  //       buffer = realloc(buffer, ++(*length));
-  //       memcpy(&buffer[i], &target[i], j - i);
-  //       memcpy(&buffer[j], replacement, strlen(replacement));
-  //       i = j + 2;
-  //       break;
-  //     }
-  //   }
-  // }
 
 	return buffer;
 }
-//   for (size_t i = 4, j = 0; i < *length; i++, j++) {
-//       if (target[i] == needle) {
-//           printf("LENGTH: %d\n", *length);
-//           buffer = realloc(buffer, ++(*length));
-//           memcpy(&buffer[i + 1], &buffer[i], (*length) - i - 1);
-//
-//           buffer[i] = ESCAPE;
-//
-//           i++;
-//       }
-//   }
-// //target = realloc(target, *length);
 
 
 char *rm_stuffing(char *str, size_t length){
     char *buf = malloc(length);
 
-    for (size_t i = 0, j = 0; i < length; i++,j++)
+    for (size_t i = 0, j = 0; i < length + 4; i++,j++)
     {
         if(str[j] == ESCAPE)
             buf[i] = str[++j];
