@@ -82,7 +82,9 @@ int send_file(char *filename) {
         bytes_written = send_packet(fd, &frame);
         ++counter;
     }
-
+	
+  if(llclose(fd) <= 0)
+   exit(-1);
     // prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
     // if (send_packet(fd, &frame) == ERROR) return ERROR;
 

@@ -87,21 +87,21 @@ char *build_frame(frame_t *frame) {
     printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
     char esc_esc[3];
     sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
-    str_replace(packet, ESCAPE, esc_esc, &(frame->length));
+    packet=str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
     printf("after escape stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
         printf(" %02x ", (unsigned char) packet[i]);
 
     char esc_flag[] = {ESCAPE, FLAG};
-    str_replace(packet, FLAG, esc_flag, &(frame->length));
+    packet=str_replace(packet, FLAG, esc_flag, &(frame->length));
 
         printf("after flag stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)
         printf(" %02x ", (unsigned char) packet[i]);
 
     char esc_bcc[] = {ESCAPE, (char)bcc2};
-    // str_replace(packet, bcc2, esc_bcc, &(frame->length));
+    packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
 
     printf("after bcc stuffing\n");
     for(size_t i = 0; i < frame->length; ++i)

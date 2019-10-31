@@ -43,8 +43,6 @@ int main(int argc, char **argv) {
 
   free(filename);
 
-  if(llclose(fd) <= 0)
-   exit(-1);
 
   // Reenvio
 
