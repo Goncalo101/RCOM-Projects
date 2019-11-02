@@ -59,6 +59,8 @@ unsigned char *build_control_packet(file_t *file_info, size_t *length, unsigned 
     memcpy(&filename_tlv[2], file_info->filename, filename_len);
     memcpy(&ctrl_packet[11], filename_tlv, filename_len + 2);
 
+    free(filename_tlv);
+
     return ctrl_packet;
 }
 
@@ -86,11 +88,10 @@ unsigned char *build_frame(frame_t *frame) {
 
     if (frame->request_type == DATA_REQ) {
       printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
-      unsigned char esc_esc[3];
-      sprintf(esc_esc, "%c%c", ESCAPE, ESCAPE);
+      unsigned char esc_esc[] = {ESCAPE, ESCAPE ^ 0x20};
       packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
-      unsigned char esc_flag[] = {ESCAPE, FLAG};
+      unsigned char esc_flag[] = {ESCAPE, FLAG ^ 0x20};
       packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
       unsigned char esc_bcc[] = {ESCAPE, (unsigned char)bcc2};

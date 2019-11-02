@@ -150,7 +150,7 @@ int state_machine(unsigned char rec_byte) {
 
         break;
     case ESC:
-        if (data_machine(rec_byte)) {
+        if (data_machine(rec_byte ^ 0x20)) {
             state = CHECK_END_FLAG;
         }
         state = BCC_OK;
