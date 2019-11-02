@@ -94,7 +94,7 @@ unsigned char *build_frame(frame_t *frame) {
       unsigned char esc_flag[] = {ESCAPE, 0x5e};
       packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
-      unsigned char esc_bcc[] = {ESCAPE, (unsigned char)bcc2};
+      unsigned char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2)};
       packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
 
       printf("AFTER BYTE STUFFING: %ld\n", frame->length);
