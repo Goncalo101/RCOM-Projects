@@ -36,20 +36,19 @@ int llread(int fd, unsigned char *buffer) {
             return ERROR;
         }
 
-        printf("read hex: 0x%x ascii:%u\n", buffer[bytes_read], buffer[bytes_read]);
+        printf("%02x ", buffer[bytes_read]);
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
     if(accept == -2) return accept;
     alarm(0);
-    printf("BYTES READ: 0x%02x %d\n", buffer[bytes_read-1], accept);
+    printf("\nread %d bytes, accept %d\n", bytes_read, accept);
 
     if (alarm_count <= 0) {
         printf("Alarm limit reached.\n");
         return ERROR;
     }
-    printf("read %d bytes\n", bytes_read);
 
     return bytes_read;
 }
@@ -65,17 +64,16 @@ int llwrite(int fd, unsigned char *buffer, int length) {
             return ERROR;
         }
 
-        printf("wrote hex: 0x%x ascii:%u\n", buffer[bytes_written], buffer[bytes_written]);
+        printf("%02x ", buffer[bytes_written]);
     }
 
-    printf("wrote %d bytes\n", bytes_written);
+    printf("\nwrote %d bytes\n", bytes_written);
 
     return bytes_written;
 }
 
 int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
     static int count = 0;
-    printf("CMD COUNT: %d\n", ++count);
     int bytes_read = 0;
     while (cmd[2] != cmd_byte) {
         bytes_read = llread(fd, cmd);
@@ -90,8 +88,6 @@ int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
 
 int send_packet(int fd, frame_t *frame) {
     unsigned char *frame_str = build_frame(frame);
-
-    printf("FRAME: %s\n", frame_str);
 
     int bytes_written = llwrite(fd, frame_str, frame->length);
 
@@ -123,23 +119,29 @@ int string_to_int(unsigned char *string){
 
 int get_packet(int fd, frame_t *frame) {
     unsigned char *buffer = malloc(2 * MAX_FRAGMENT_SIZE + 14);
-    int bytes_read = llread(fd, buffer);
-    unsigned char buf[TYPE_A_PACKET_LENGTH];
-
+    unsigned char buf[TYPE_A_PACKET_LENGTH + 1];
+    int bytes_read = 0;
     unsigned char cmd;
 
-    if (bytes_read == ERROR) {
-        return ERROR;
-    } else if(bytes_read == -2) {
-        if (buffer[2] == 0) {
-          cmd = 0x81;
-        } else if (buffer[2] == 0x40) {
-          cmd = 0x01;
+    while ((bytes_read = llread(fd, buffer)) < 0) {
+        if (bytes_read == ERROR) {
+            return ERROR;
+        } else if(bytes_read == -2) {
+            if (buffer[2] == 0) {
+                cmd = 0x81;
+            } else if (buffer[2] == 0x40) {
+                cmd = 0x01;
+            }
+
+            sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
+            for (int i = 0; i < 6; ++i) {
+                printf("buf[%d] = %02x\n", i, buf[i]);
+            }
+            llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
         }
-        sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
-        llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
-        return 0;
     }
+
+    
 
     buffer = realloc(buffer, bytes_read);
 

@@ -41,8 +41,6 @@ int data_machine(unsigned char rec_byte) {
     static int length_counter = 2, counter = 0;
     static unsigned int length = 0;
 
-    printf("\n data machine state: %d\n", state);
-
     switch (state) {
     case CTRL_FLD:
         bcc2 = rec_byte;
@@ -66,13 +64,11 @@ int data_machine(unsigned char rec_byte) {
         if (length_counter == 2) {
             bcc2 = (BCC(bcc2, rec_byte));
             length += ((unsigned int)(rec_byte) * 255);
-            printf("received length %d (no remainder), rec_byte %02x\n", length, (unsigned char) rec_byte);
             --length_counter;
         }
         else if (length_counter == 1) {
             bcc2 = (BCC(bcc2, rec_byte));
             length += (unsigned int) (rec_byte);
-            printf("received remainder %d, rec_byte %02x\n", length, (unsigned char) rec_byte);
             state = DATA;
         }
         break;
@@ -87,7 +83,6 @@ int data_machine(unsigned char rec_byte) {
         length_counter = 2;
         counter = 0;
         length = 0;
-        printf("received bcc2 0x%02x, computed bcc2 0x%02X\n", rec_byte, bcc2);
         if (bcc2 != rec_byte) {
             puts("bcc 2 error");
             bcc2 = 0;
