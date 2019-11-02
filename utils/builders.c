@@ -88,10 +88,10 @@ unsigned char *build_frame(frame_t *frame) {
 
     if (frame->request_type == DATA_REQ) {
       printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
-      unsigned char esc_esc[] = {ESCAPE, ESCAPE ^ 0x20};
+      unsigned char esc_esc[] = {ESCAPE, 0x5d};
       packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
-      unsigned char esc_flag[] = {ESCAPE, FLAG ^ 0x20};
+      unsigned char esc_flag[] = {ESCAPE, 0x5e};
       packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
       unsigned char esc_bcc[] = {ESCAPE, (unsigned char)bcc2};
