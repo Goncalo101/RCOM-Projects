@@ -114,7 +114,7 @@ int receive_file(unsigned char *filename) {
         else if(read == 0)
             continue;
 
-        write(file_desc, frame.packet->fragment, read-4);
+        write(file_desc, frame.packet->fragment, read);
         bytes_read += read;
     }
     if(llclose(fd) <= 0)

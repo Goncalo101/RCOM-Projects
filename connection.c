@@ -154,11 +154,11 @@ int get_packet(int fd, frame_t *frame) {
         case DATA_PACKET:
             len = buffer[6] * 255 + buffer[7];
             printf("asdasdasdasdasdasdasd %d\n", len);
-            buffer = rm_stuffing(buffer, len+6);
+            buffer = rm_stuffing(buffer, len+8);
             frame->length = len;
-            frame->packet->fragment = malloc(len - 4);
+            frame->packet->fragment = malloc(len);
             // verificar aqui
-            memcpy(frame->packet->fragment, &buffer[8], len - 4);
+            memcpy(frame->packet->fragment, &buffer[8], len);
             bytes_read = len;
             break;
         case END_PACKET:
