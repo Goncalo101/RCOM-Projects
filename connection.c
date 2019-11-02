@@ -125,12 +125,11 @@ int string_to_int(unsigned char *string){
 }
 
 int get_packet(int fd, frame_t *frame) {
-    unsigned char *buffer = malloc(MAX_FRAGMENT_SIZE + 10);
+    unsigned char *buffer = malloc(2 * MAX_FRAGMENT_SIZE + 14);
     int bytes_read = llread(fd, buffer);
     unsigned char buf[TYPE_A_PACKET_LENGTH];
 
     unsigned char cmd;
-    
 
     if (bytes_read == ERROR) {
         return ERROR;
@@ -140,12 +139,15 @@ int get_packet(int fd, frame_t *frame) {
         } else if (buffer[2] == 0x40) {
           cmd = 0x01;
         }
-        sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, REJECT), FLAG);
+        sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
         llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
         return 0;
     }
 
+    printf("asdasdasdqweqweqwe\n");
     buffer = realloc(buffer, bytes_read);
+    printf("asdasdasdqweqweqwe\n");
+
     size_t len;
 
     switch (buffer[CTRL_POS]) {

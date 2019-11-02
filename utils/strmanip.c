@@ -35,9 +35,7 @@ unsigned char *rm_stuffing(unsigned char *str, size_t length){
     for (size_t i = 0, j = 0; i < length; i++,j++)
     {
         if(str[j] == ESCAPE) {
-            if (str[++j] == 0x5e || str[j] == 0x5d)
-                buf[i] = str[j] ^ 0x20;
-            else buf[i] = str[j];
+            buf[i] = str[++j] ^ 0x20;
         } else buf[i] = str[j];
     }
 

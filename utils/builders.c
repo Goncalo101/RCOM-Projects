@@ -29,12 +29,11 @@ void int_to_string(off_t integer, unsigned char string[8]) {
 unsigned char *build_data_packet(unsigned char *fragment, size_t *length) {
     static unsigned char seq_no = 0;
 
-    *length += PACKET_HEAD_LEN;
-
-    unsigned char *packet = malloc((*length) * sizeof(unsigned char) + 1);
-    printf ("LENGTH / 255: %d, length: %d", (unsigned char) ((*length) / 255), (unsigned char)(*length));
+    unsigned char *packet = malloc((*length) * sizeof(unsigned char) + PACKET_HEAD_LEN + 1);
+    printf ("LENGTH / 255: %d, length: %d\n", (unsigned char) ((*length) / 255), (unsigned char)(*length));
     sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (unsigned char) ((*length) / 255), (unsigned char) ((*length) % 255));
     memcpy(&packet[4], fragment, *length);
+    *length += PACKET_HEAD_LEN;
 
     return packet;
 }
@@ -94,7 +93,7 @@ unsigned char *build_frame(frame_t *frame) {
       unsigned char esc_flag[] = {ESCAPE, 0x5e};
       packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
 
-      unsigned char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2)};
+      unsigned char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2) ^ 0x20};
       packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
 
       printf("AFTER BYTE STUFFING: %ld\n", frame->length);

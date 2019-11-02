@@ -79,7 +79,7 @@ int data_machine(unsigned char rec_byte) {
     case DATA:
         bcc2 = (BCC(bcc2, rec_byte));
         ++counter;
-        if (counter >= length) state = BCC2_CHECK;
+        if (counter == length) state = BCC2_CHECK;
         
         break;
     case BCC2_CHECK:
@@ -87,6 +87,7 @@ int data_machine(unsigned char rec_byte) {
         length_counter = 2;
         counter = 0;
         length = 0;
+        printf("received bcc2 0x%02x, computed bcc2 0x%02X\n", rec_byte, bcc2);
         if (bcc2 != rec_byte) {
             puts("bcc 2 error");
             bcc2 = 0;
