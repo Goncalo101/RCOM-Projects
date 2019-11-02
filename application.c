@@ -85,11 +85,7 @@ int send_file(unsigned char *filename) {
 	
     if(llclose(fd) <= 0)
         exit(-1);
-    // prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
-    // if (send_packet(fd, &frame) == ERROR) return ERROR;
 
-    // free(file_fragment);
-    // free(packet.fragment);
 
     return 0;
 }
@@ -103,22 +99,26 @@ int receive_file(unsigned char *filename) {
 
     off_t bytes_read = 0;
     off_t file_size = frame.file_info->file_size;
+
+    int file_desc = open(frame.file_info->filename, O_WRONLY | O_CREAT, 0777);
     free(frame.file_info);
 
     frame.packet = malloc(sizeof(packet_t));
-    int file_desc = open(filename, O_WRONLY | O_CREAT, 0777);
 
     while (bytes_read < file_size) {
         int read = get_packet(fd, &frame);
         if (read == ERROR) exit(-1);
         else if(read == 0)
             continue;
-
         write(file_desc, frame.packet->fragment, read);
         bytes_read += read;
     }
+
+    free(frame.packet);
+
     if(llclose(fd) <= 0)
         exit(-1);
+
     return 0;
 }
 

@@ -22,19 +22,34 @@ void register_signal_handler() {
 }
 
 int main(int argc, char **argv) {
-  if ((argc < 4) ||
+  int mode;
+
+  if(strcmp("receiver", argv[2]) == 0)
+    mode = 1;
+  else if(strcmp("sender", argv[2]) == 0)
+    mode = 0;
+  else {
+    mode = -1;
+  }
+
+  if ((argc < 2) ||
         ((strcmp("/dev/ttyS0", argv[1])!=0) &&
         (strcmp("/dev/ttyS1", argv[1])!=0) &&
-        (strcmp("/dev/ttyS4", argv[1])!=0))) {
-    printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
+        (strcmp("/dev/ttyS4", argv[1])!=0)) || (mode == -1)) {
+    printf("Usage:\tnserial SerialPort mode filename (opt)\n\tex: nserial /dev/ttyS1 sender pinguim.gif\n\tex: nserial /dev/ttyS1 receiver\n");
     exit(1);
   }
 
-  register_signal_handler();
+  int port = atoi(&argv[1][9]);
 
-  int mode = atoi(argv[2]), port = atoi(&argv[1][9]);
-  char *filename = malloc(strlen(argv[3]) + 1);
-  strcpy(filename, argv[3]);
+  register_signal_handler();  
+
+  char *filename;
+  if(argc == 4){
+    filename = malloc(strlen(argv[3]) + 1);
+    strcpy(filename, argv[3]);
+  }
+  else filename = NULL;
 
   start_app(port, mode, filename);
 

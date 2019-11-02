@@ -95,8 +95,6 @@ int send_packet(int fd, frame_t *frame) {
 
     int bytes_written = llwrite(fd, frame_str, frame->length);
 
-    //unsigned char *packet = malloc(TYPE_A_PACKET_LENGTH + 1);
-
     unsigned char cmd;
     if (frame->frame_ctrl == 0) {
         cmd = 0x85;
@@ -114,7 +112,6 @@ int send_packet(int fd, frame_t *frame) {
 }
 
 int string_to_int(unsigned char *string){
-    // TODO mudar de sitio vai p builder
     off_t num = 0;
 
     for(int i = 0; i < SIZE_LENGTH; ++i){
@@ -144,20 +141,16 @@ int get_packet(int fd, frame_t *frame) {
         return 0;
     }
 
-    printf("asdasdasdqweqweqwe\n");
     buffer = realloc(buffer, bytes_read);
-    printf("asdasdasdqweqweqwe\n");
 
     size_t len;
 
     switch (buffer[CTRL_POS]) {
         case DATA_PACKET:
             len = buffer[6] * 255 + buffer[7];
-            printf("asdasdasdasdasdasdasd %d\n", len);
             buffer = rm_stuffing(buffer, len+8);
             frame->length = len;
             frame->packet->fragment = malloc(len);
-            // verificar aqui
             memcpy(frame->packet->fragment, &buffer[8], len);
             bytes_read = len;
             break;
