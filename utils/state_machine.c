@@ -121,7 +121,7 @@ int state_machine(unsigned char rec_byte) {
         else state = START;
         break;
     case A_RCV:
-        if (rec_byte == SET_CMD || rec_byte == UACK_CMD || rec_byte == 0x0 || rec_byte == 0x40) {
+        if (rec_byte == SET_CMD || rec_byte == UACK_CMD || rec_byte == 0x0 || rec_byte == 0x40 || rec_byte == 0xb) {
             state = C_RCV;
             cmd = rec_byte;
         }
