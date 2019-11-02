@@ -111,6 +111,8 @@ int receive_file(unsigned char *filename) {
     while (bytes_read < file_size) {
         int read = get_packet(fd, &frame);
         if (read == ERROR) exit(-1);
+        else if(read == 0)
+            continue;
 
         write(file_desc, frame.packet->fragment, read-4);
         bytes_read += read;

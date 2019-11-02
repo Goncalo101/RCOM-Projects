@@ -41,6 +41,7 @@ int llread(int fd, unsigned char *buffer) {
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
+    if(accept == -2) return accept;
     alarm(0);
     printf("BYTES READ: 0x%02x %d\n", buffer[bytes_read-1], accept);
 
@@ -78,6 +79,7 @@ int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
     int bytes_read = 0;
     while (cmd[2] != cmd_byte) {
         bytes_read = llread(fd, cmd);
+        if(cmd[2] == 0x01 || cmd[2] == 0x81) return -1;
         if (bytes_read == ERROR) {
             exit(ERROR);
         }
@@ -97,12 +99,15 @@ int send_packet(int fd, frame_t *frame) {
 
     unsigned char cmd;
     if (frame->frame_ctrl == 0) {
-        cmd = 0x40;
+        cmd = 0x85;
     } else if (frame->frame_ctrl == 0x40) {
-        cmd = 0x0;
+        cmd = 0x05;
     }
     
-    check_cmd(fd, cmd, frame_str);
+    while (check_cmd(fd, cmd, frame_str) == -1){
+        bytes_written = llwrite(fd, frame_str, frame->length);
+    }
+   
     //free(frame_str);
 
     return bytes_written;
@@ -122,9 +127,22 @@ int string_to_int(unsigned char *string){
 int get_packet(int fd, frame_t *frame) {
     unsigned char *buffer = malloc(MAX_FRAGMENT_SIZE + 10);
     int bytes_read = llread(fd, buffer);
+    unsigned char buf[TYPE_A_PACKET_LENGTH];
+
+    unsigned char cmd;
+    
 
     if (bytes_read == ERROR) {
         return ERROR;
+    } else if(bytes_read == -2) {
+        if (buffer[2] == 0) {
+          cmd = 0x81;
+        } else if (buffer[2] == 0x40) {
+          cmd = 0x01;
+        }
+        sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, REJECT), FLAG);
+        llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
+        return 0;
     }
 
     buffer = realloc(buffer, bytes_read);
@@ -149,12 +167,11 @@ int get_packet(int fd, frame_t *frame) {
             break;
     }
 
-    unsigned char buf[TYPE_A_PACKET_LENGTH];
-    unsigned char cmd;
+
     if (buffer[2] == 0) {
-        cmd = 0x40;
+        cmd = 0x85;
     } else if (buffer[2] == 0x40) {
-        cmd = 0;
+        cmd = 0x05;
     }
 
     sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);

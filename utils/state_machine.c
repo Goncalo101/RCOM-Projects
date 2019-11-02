@@ -88,10 +88,9 @@ int data_machine(unsigned char rec_byte) {
         counter = 0;
         length = 0;
         if (bcc2 != rec_byte) {
-            printf("COUNTER: %d\n", counter);
             puts("bcc 2 error");
             bcc2 = 0;
-            return -1;
+            return -2;
         }
         bcc2 = 0;
         return 1;
@@ -105,6 +104,7 @@ int data_machine(unsigned char rec_byte) {
 int state_machine(unsigned char rec_byte) {
     static machine_state state = START;
     static unsigned char cmd = 0, addr = 0;
+    int data_ret;
     
     switch (state) {
     case START:
@@ -144,8 +144,13 @@ int state_machine(unsigned char rec_byte) {
             return 1;
         } else if (rec_byte == ESCAPE) {
             state = ESC;
-        }else if (data_machine(rec_byte)) {
+        }else if ((data_ret = data_machine(rec_byte)) == 1) {
             state = CHECK_END_FLAG;
+        }else if(data_ret == -2){
+            state = START;
+            cmd = 0;
+            addr = 0;
+            return -2;
         }
 
         break;

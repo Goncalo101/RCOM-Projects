@@ -10,6 +10,7 @@
 #define UACK_CMD 0x07
 #define BCC(ADDR, CMD) (ADDR) ^ (CMD)
 #define ESCAPE 0x7d
+#define REJECT 0x81
 
 #define SIZE_LENGTH 8
 #define FILE_SIZE_PARAM 0x00
