@@ -230,6 +230,7 @@ void terminal_setup(int fd) {
 
 int llopen(int port, int mode) {
     unsigned char device[10];
+    connection_mode = mode;
 
     sprintf(device, "/dev/ttyS%d", port);
     puts(device);
@@ -256,13 +257,16 @@ int llclose(int fd) {
     case 0:
       sprintf(buffer, "%c%c%c%c%c", FLAG, SENDER_CMD, 0xb, BCC(SENDER_CMD, 0xb), FLAG);
       bytes_written+=llwrite(fd, buffer, TYPE_A_PACKET_LENGTH);
+      bzero(buffer, TYPE_A_PACKET_LENGTH+1);
       check_cmd(fd, 0xb, buffer);
       sprintf(buffer, "%c%c%c%c%c", FLAG, SENDER_CMD, UACK_CMD, BCC(SENDER_CMD, UACK_CMD), FLAG);
       bytes_written+=llwrite(fd, buffer, TYPE_A_PACKET_LENGTH);
       break;
     case 1:
+      check_cmd(fd, 0xb, buffer);
       sprintf(buffer, "%c%c%c%c%c", FLAG, SENDER_CMD, 0xb, BCC(SENDER_CMD, 0xb), FLAG);
       bytes_written+=llwrite(fd, buffer, TYPE_A_PACKET_LENGTH);
+      bzero(buffer, TYPE_A_PACKET_LENGTH+1);      
       check_cmd(fd, UACK_CMD, buffer);
       break;
   }

@@ -83,8 +83,8 @@ int send_file(unsigned char *filename) {
         ++counter;
     }
 	
-  if(llclose(fd) <= 0)
-   exit(-1);
+    if(llclose(fd) <= 0)
+        exit(-1);
     // prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, END_PACKET, control[counter % 2]);
     // if (send_packet(fd, &frame) == ERROR) return ERROR;
 
@@ -115,7 +115,8 @@ int receive_file(unsigned char *filename) {
         write(file_desc, frame.packet->fragment, read-4);
         bytes_read += read;
     }
-
+    if(llclose(fd) <= 0)
+        exit(-1);
     return 0;
 }
 
