@@ -4,6 +4,7 @@
 #define BAUDRATE B230400
 #define MAX_FRAGMENT_SIZE 65279
 
+#define MAX_RETRIES 3
 #define MAX_ALARM_COUNT 3
 #define TIMEOUT 5
 #define CTRL_POS 4

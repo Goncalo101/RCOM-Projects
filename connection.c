@@ -99,9 +99,9 @@ int send_packet(int fd, frame_t *frame) {
         cmd = 0x05;
     }
 
-    int bytes_written = llwrite(fd, frame_str, frame->length);
+    int bytes_written = llwrite(fd, frame_str, frame->length), counter = MAX_RETRIES;
 
-    while (check_cmd(fd, cmd, buf) == -1){
+    while (check_cmd(fd, cmd, buf) == -1 && counter-- > 0) {
         bytes_written = llwrite(fd, frame_str, frame->length);
 		if (frame->frame_ctrl == 0) {
         	cmd = 0x85;
@@ -128,10 +128,10 @@ int string_to_int(unsigned char *string){
 int get_packet(int fd, frame_t *frame) {
     unsigned char *buffer = malloc(2 * MAX_FRAGMENT_SIZE + 14);
     unsigned char buf[TYPE_A_PACKET_LENGTH + 1];
-    int bytes_read = 0;
+    int bytes_read = 0, counter = MAX_RETRIES;
     unsigned char cmd;
 
-    while ((bytes_read = llread(fd, buffer)) < 0) {
+    while ((bytes_read = llread(fd, buffer)) < 0 && counter-- > 0) {
         if (bytes_read == ERROR) {
             return ERROR;
         } else if(bytes_read == -2) {
@@ -142,14 +142,9 @@ int get_packet(int fd, frame_t *frame) {
             }
 
             sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
-            for (int i = 0; i < 6; ++i) {
-                printf("buf[%d] = %02x\n", i, buf[i]);
-            }
             llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
         }
     }
-
-    
 
     buffer = realloc(buffer, bytes_read);
 
