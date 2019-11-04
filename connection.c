@@ -35,8 +35,9 @@ int llread(int fd, unsigned char *buffer) {
             perror("read failed");
             return ERROR;
         }
-
-        printf("%02x ", buffer[bytes_read]);
+        #ifdef debug
+        printf(" %02x ", buffer[bytes_read]);
+        #endif
         accept = state_machine(buffer[bytes_read]);
         bytes_read++;
 
@@ -63,8 +64,9 @@ int llwrite(int fd, unsigned char *buffer, int length) {
             perror("write error");
             return ERROR;
         }
-
-        printf("%02x ", buffer[bytes_written]);
+        #ifdef debug
+        printf(" %02x ", buffer[bytes_written]);
+        #endif
     }
 
     printf("\nwrote %d bytes\n", bytes_written);

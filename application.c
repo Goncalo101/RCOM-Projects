@@ -82,6 +82,8 @@ int send_file(unsigned char *filename) {
         bytes_written = send_packet(fd, &frame);
         ++counter;
     }
+
+    close(file_desc);
 	
     if(llclose(fd) <= 0)
         exit(-1);
@@ -115,6 +117,7 @@ int receive_file(unsigned char *filename) {
     }
 
     free(frame.packet);
+    close(file_desc);
 
     if(llclose(fd) <= 0)
         exit(-1);

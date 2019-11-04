@@ -3,6 +3,8 @@
 #include "../flags.h"
 #include "state_machine.h"
 
+static int counter = 0, length = 0;
+
 int tlv_machine(unsigned char rec_byte) {
     static tlv_state state = TYPE;
     static unsigned char length_counter = 0;
@@ -38,8 +40,7 @@ int tlv_machine(unsigned char rec_byte) {
 int data_machine(unsigned char rec_byte) {
     static data_state state = CTRL_FLD;
     static int bcc2 = 0;
-    static int length_counter = 2, counter = 0;
-    static unsigned int length = 0;
+    static int length_counter = 2;
 
     switch (state) {
     case CTRL_FLD:
@@ -137,12 +138,17 @@ int state_machine(unsigned char rec_byte) {
             state = START;
             cmd = 0;
             addr = 0;
+            if (counter < length) {
+                counter = 0;
+                length = 0;
+                return -2;
+            }
             return 1;
         } else if (rec_byte == ESCAPE) {
             state = ESC;
-        }else if ((data_ret = data_machine(rec_byte)) == 1) {
+        } else if ((data_ret = data_machine(rec_byte)) == 1) {
             state = CHECK_END_FLAG;
-        }else if(data_ret == -2){
+        } else if(data_ret == -2) {
             state = START;
             cmd = 0;
             addr = 0;
