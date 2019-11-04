@@ -77,16 +77,12 @@ unsigned char *build_frame(frame_t *frame) {
         default:break;
     }
 
-    printf("control packet built\n");
-    printf("new length %ld\n", frame->length);
-
     int bcc2 = calc_bcc2(packet, frame->length);
 
     unsigned char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
     sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
     if (frame->request_type == DATA_REQ) {
-      printf("BEFORE BYTE STUFFING: %ld\n", frame->length);
       unsigned char esc_esc[] = {ESCAPE, 0x5d};
       packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
 
@@ -95,8 +91,6 @@ unsigned char *build_frame(frame_t *frame) {
 
       unsigned char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2) ^ 0x20};
       packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
-
-      printf("AFTER BYTE STUFFING: %ld\n", frame->length);
     }
 
     memcpy(&frame_str[4], packet, frame->length);

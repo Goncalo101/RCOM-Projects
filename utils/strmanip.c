@@ -11,8 +11,6 @@ unsigned char *str_replace(unsigned char *target, unsigned char needle, const un
     bzero(buffer, original_length);
     memcpy(buffer, target, 4);
 
-    printf("LENGTH BEFORE REPL: %ld\n", *length);
-
     for (size_t i = 4, j = 4; i < original_length; ++i, ++j) {
       if (target[i] == needle) {
           ++(*length);

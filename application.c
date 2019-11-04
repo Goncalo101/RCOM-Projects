@@ -88,7 +88,6 @@ int send_file(unsigned char *filename) {
     if(llclose(fd) <= 0)
         exit(-1);
 
-
     return 0;
 }
 
