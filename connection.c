@@ -109,7 +109,7 @@ int send_packet(int fd, frame_t *frame) {
         	cmd = 0x05;
    		}
     }
-   
+   if(counter <= 0) exit(-1);
     //free(frame_str);
 
     return bytes_written;
