@@ -79,10 +79,10 @@ int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
     int bytes_read = 0;
     while (cmd[2] != cmd_byte) {
         bytes_read = llread(fd, cmd);
-        if(cmd[2] == 0x01 || cmd[2] == 0x81) return -1;
         if (bytes_read == ERROR) {
             exit(ERROR);
         }
+        if (cmd[bytes_read - 3] == 0x01 || cmd[bytes_read - 3] == 0x81) return -1;
     }
 
     return bytes_read;

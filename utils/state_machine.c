@@ -4,6 +4,9 @@
 #include "state_machine.h"
 
 static int counter = 0, length = 0;
+static int bcc2 = 0;
+static int length_counter = 2;
+static data_state data_machine_state = CTRL_FLD;
 
 int tlv_machine(unsigned char rec_byte) {
     static tlv_state state = TYPE;
@@ -38,28 +41,24 @@ int tlv_machine(unsigned char rec_byte) {
 }
 
 int data_machine(unsigned char rec_byte) {
-    static data_state state = CTRL_FLD;
-    static int bcc2 = 0;
-    static int length_counter = 2;
-
-    switch (state) {
+    switch (data_machine_state) {
     case CTRL_FLD:
         bcc2 = rec_byte;
         if (rec_byte == DATA_PACKET) {
-            state = SEQ_NO;
+            data_machine_state = SEQ_NO;
         } else if (rec_byte == START_PACKET || rec_byte == END_PACKET) {
-            state = TLV;
+            data_machine_state = TLV;
         }
         break;
     case TLV:
         bcc2 = (BCC(bcc2, rec_byte));
         if (tlv_machine(rec_byte)) {
-            state = BCC2_CHECK;
+            data_machine_state = BCC2_CHECK;
         }
         break;
     case SEQ_NO:
         bcc2 = (BCC(bcc2, rec_byte));
-        state = LENGTH;
+        data_machine_state = LENGTH;
         break;
     case LENGTH:
         if (length_counter == 2) {
@@ -70,17 +69,17 @@ int data_machine(unsigned char rec_byte) {
         else if (length_counter == 1) {
             bcc2 = (BCC(bcc2, rec_byte));
             length += (unsigned int) (rec_byte);
-            state = DATA;
+            data_machine_state = DATA;
         }
         break;
     case DATA:
         bcc2 = (BCC(bcc2, rec_byte));
         ++counter;
-        if (counter == length) state = BCC2_CHECK;
+        if (counter == length) data_machine_state = BCC2_CHECK;
         
         break;
     case BCC2_CHECK:
-        state = CTRL_FLD;
+        data_machine_state = CTRL_FLD;
         length_counter = 2;
         counter = 0;
         length = 0;
@@ -139,6 +138,9 @@ int state_machine(unsigned char rec_byte) {
             cmd = 0;
             addr = 0;
             if (counter < length) {
+                bcc2 = 0;
+                length_counter = 2;
+                data_machine_state = CTRL_FLD;
                 counter = 0;
                 length = 0;
                 return -2;
