@@ -91,17 +91,23 @@ int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
 int send_packet(int fd, frame_t *frame) {
     unsigned char *frame_str = build_frame(frame);
 
-    int bytes_written = llwrite(fd, frame_str, frame->length);
-
     unsigned char cmd;
+    unsigned char buf[TYPE_A_PACKET_LENGTH + 1];
     if (frame->frame_ctrl == 0) {
         cmd = 0x85;
     } else if (frame->frame_ctrl == 0x40) {
         cmd = 0x05;
     }
-    
-    while (check_cmd(fd, cmd, frame_str) == -1){
+
+    int bytes_written = llwrite(fd, frame_str, frame->length);
+
+    while (check_cmd(fd, cmd, buf) == -1){
         bytes_written = llwrite(fd, frame_str, frame->length);
+		if (frame->frame_ctrl == 0) {
+        	cmd = 0x85;
+    	} else if (frame->frame_ctrl == 0x40) {
+        	cmd = 0x05;
+   		}
     }
    
     //free(frame_str);
