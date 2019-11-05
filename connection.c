@@ -131,7 +131,7 @@ int get_packet(int fd, frame_t *frame) {
     int bytes_read = 0, counter = MAX_RETRIES;
     unsigned char cmd;
 
-    while ((bytes_read = llread(fd, buffer)) < 0 && counter-- > 0) {
+    while ((bytes_read = llread(fd, buffer)) < 0 && --counter > 0) {
         if (bytes_read == ERROR) {
             return ERROR;
         } else if(bytes_read == -2) {
@@ -140,10 +140,14 @@ int get_packet(int fd, frame_t *frame) {
             } else if (buffer[2] == 0x40) {
                 cmd = 0x01;
             }
-
             sprintf(buf, "%c%c%c%c%c", FLAG, RECEIVER_ANS, cmd, BCC(RECEIVER_ANS, cmd), FLAG);
             llwrite(fd, buf, TYPE_A_PACKET_LENGTH);
         }
+    }
+
+    if (counter <= 0) {
+        printf("number of tries exceeded (connection lost?), exiting\n");
+        exit(-1);
     }
 
     buffer = realloc(buffer, bytes_read);
