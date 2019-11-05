@@ -82,7 +82,7 @@ int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
         if (bytes_read == ERROR) {
             return ERROR;
         }
-        if (cmd[bytes_read - 3] == 0x01 || cmd[bytes_read - 3] == 0x81) return -1;
+        if (cmd[bytes_read - 3] == 0x01 || cmd[bytes_read - 3] == 0x81) return -2;
     }
 
     return bytes_read;
@@ -100,8 +100,9 @@ int send_packet(int fd, frame_t *frame) {
     }
 
     int bytes_written = llwrite(fd, frame_str, frame->length), counter = MAX_RETRIES;
-
-    while (check_cmd(fd, cmd, buf) == -1 && counter-- > 0) {
+    int cmd_stat = 0;
+    while ((cmd_stat = check_cmd(fd, cmd, buf)) < 0 && counter > 0) {
+        if(cmd_stat == -1) --counter;
         bytes_written = llwrite(fd, frame_str, frame->length);
 		if (frame->frame_ctrl == 0) {
         	cmd = 0x85;
