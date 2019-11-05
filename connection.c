@@ -19,8 +19,9 @@ static frame_t received_frame;
 static struct termios oldtio;
 static int connection_mode = 0;
 
-int llread(int fd, unsigned char *buffer) {
+int llread(int fd, unsigned char *b) {
     int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
+	unsigned char *buffer = malloc(5);
 
     do {
         alarm(TIMEOUT);
@@ -39,18 +40,20 @@ int llread(int fd, unsigned char *buffer) {
         printf(" %02x ", buffer[bytes_read]);
         #endif
         accept = state_machine(buffer[bytes_read]);
-        bytes_read++;
+		if(accept >= -5)
+        	bytes_read++;
+		printf("actual read %d\n", res);
 
     } while (!accept && alarm_count > 0);
     if(accept == -2) return accept;
     alarm(0);
-    printf("\nread %d bytes, accept %d\n", bytes_read, accept);
+    printf("\nread %d bytes, accept %d, actual read %d\n", bytes_read, accept, res);
 
     if (alarm_count <= 0) {
         printf("Alarm limit reached.\n");
         return ERROR;
     }
-
+	memcpy(b, buffer, 5);
     return bytes_read;
 }
 
