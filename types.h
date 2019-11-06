@@ -8,7 +8,7 @@ typedef enum {
 
 typedef struct {
     off_t file_size;
-    unsigned char *filename;
+    char *filename;
 } file_t;
 
 typedef struct {

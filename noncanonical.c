@@ -48,22 +48,17 @@ int main(int argc, char **argv) {
   if(argc == 4){
     filename = malloc(strlen(argv[3]) + 1);
     strcpy(filename, argv[3]);
-  }
+  } 
   else filename = NULL;
 
-  start_app(port, mode, filename);
+  start_app(port, mode);
 
-  func_ptr functions[] = {send_file, receive_file};
-  functions[mode](filename);
+  if (mode == 0)
+    send_file(filename);
+  else if (mode == 1)
+    receive_file();
 
   free(filename);
-
-
-  // Reenvio
-
-  /*
-    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o
-  */
 
   return 0;
 }

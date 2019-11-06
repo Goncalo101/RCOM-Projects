@@ -11,7 +11,7 @@
 int calc_bcc2(unsigned char *packet, size_t length){
     int bcc2 = BCC(packet[0], packet[1]);
 
-    for(int i = 2; i < length; ++i){
+    for (size_t i = 2; i < length; ++i){
         bcc2 = BCC(bcc2, packet[i]);
     }
     return bcc2;
@@ -26,81 +26,77 @@ void int_to_string(off_t integer, unsigned char string[8]) {
     }
 }
 
-unsigned char *build_data_packet(unsigned char *fragment, size_t *length) {
+void build_data_packet(unsigned char *fragment, unsigned char **packet, size_t *length) {
     static unsigned char seq_no = 0;
 
-    unsigned char *packet = malloc((*length) * sizeof(unsigned char) + PACKET_HEAD_LEN + 1);
+    *packet = calloc((*length) + PACKET_HEAD_LEN + 1, 1);
     printf ("LENGTH / 255: %d, length: %d\n", (unsigned char) ((*length) / 255), (unsigned char)(*length));
-    sprintf(packet, "%c%c%c%c", DATA_PACKET, seq_no++, (unsigned char) ((*length) / 255), (unsigned char) ((*length) % 255));
-    memcpy(&packet[4], fragment, *length);
-    *length += PACKET_HEAD_LEN;
+    sprintf((char *) (*packet), "%c%c%c%c", DATA_PACKET, seq_no++, (unsigned char) ((*length) / 255), (unsigned char) ((*length) % 255));
+    memcpy(&(*packet[4]), fragment, *length);
 
-    return packet;
+    *length += PACKET_HEAD_LEN;
+    *packet = realloc(*packet, *length);
 }
 
 
-unsigned char *build_control_packet(file_t *file_info, size_t *length, unsigned char ctrl) {
+void build_control_packet(file_t *file_info, size_t *length, unsigned char **packet, unsigned char ctrl) {
     size_t filename_len = strlen(file_info->filename);
 
     *length = 5 + filename_len + 8;
-    unsigned char *ctrl_packet = malloc(*length);
-    bzero(ctrl_packet, *length);
+    *packet = calloc(*length, 1);
 
-    sprintf(ctrl_packet, "%c%c%c", ctrl, FILE_SIZE_PARAM, 8);
+    sprintf((char *) (*packet), "%c%c%c", ctrl, FILE_SIZE_PARAM, 8);
 
     unsigned char file_size_buf[8];
     int_to_string(file_info->file_size, file_size_buf);
 
-    memcpy(&ctrl_packet[3], file_size_buf, 8);
+    memcpy(&(*packet[3]), file_size_buf, 8);
 
     unsigned char *filename_tlv = malloc(filename_len + 2);
-    sprintf(filename_tlv, "%c%c", FILE_NAME_PARAM, (unsigned char) filename_len);
+    sprintf((char *) filename_tlv, "%c%c", FILE_NAME_PARAM, (unsigned char) filename_len);
     memcpy(&filename_tlv[2], file_info->filename, filename_len);
-    memcpy(&ctrl_packet[11], filename_tlv, filename_len + 2);
+    memcpy(&(*packet[11]), filename_tlv, filename_len + 2);
 
     free(filename_tlv);
-
-    return ctrl_packet;
 }
 
-unsigned char *build_frame(frame_t *frame) {
+void build_frame(frame_t *frame, unsigned char **frame_str) {
     unsigned char *packet;
     printf("building control packet with initial length %ld\n", frame->length);
     switch (frame->request_type) {
         case DATA_REQ:
             printf("building data packet\n");
-            packet = build_data_packet(frame->packet->fragment, &(frame->length));
+            build_data_packet(frame->packet->fragment, &packet, &(frame->length));
             break;
         case CTRL_REQ:
             printf("building control packet\n");
-            packet = build_control_packet(frame->file_info, &(frame->length), frame->packet_ctrl);
+            build_control_packet(frame->file_info, &(frame->length), &packet, frame->packet_ctrl);
         default:break;
     }
 
     int bcc2 = calc_bcc2(packet, frame->length);
 
-    unsigned char *frame_str = malloc(frame->length + FRAME_I_LENGTH);
-    sprintf(frame_str, "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
+    *frame_str = malloc(frame->length + FRAME_I_LENGTH);
+    sprintf((char *) (*frame_str), "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
     if (frame->request_type == DATA_REQ) {
-      unsigned char esc_esc[] = {ESCAPE, 0x5d};
-      packet = str_replace(packet, ESCAPE, esc_esc, &(frame->length));
+      char esc_esc[] = {ESCAPE, 0x5d};
+      str_replace(&packet, ESCAPE, esc_esc, &(frame->length));
 
-      unsigned char esc_flag[] = {ESCAPE, 0x5e};
-      packet = str_replace(packet, FLAG, esc_flag, &(frame->length));
+      char esc_flag[] = {ESCAPE, 0x5e};
+      str_replace(&packet, FLAG, esc_flag, &(frame->length));
 
-      unsigned char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2) ^ 0x20};
-      packet = str_replace(packet, bcc2, esc_bcc, &(frame->length));
+      char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2) ^ 0x20};
+      str_replace(&packet, bcc2, esc_bcc, &(frame->length));
     }
 
-    memcpy(&frame_str[4], packet, frame->length);
-    sprintf(&frame_str[4 + (frame->length)], "%c%c", bcc2, FLAG);
+    memcpy(&(*frame_str[4]), packet, frame->length);
+    sprintf((char*) (&(*frame_str[4 + (frame->length)])), "%c%c", bcc2, FLAG);
+    free(packet);
     frame->length += FRAME_I_LENGTH;
-
-    return frame_str;
 }
 
-void prepare_control_frame(frame_t *frame, off_t file_size, size_t filename_len, unsigned char *filename, unsigned char addr, request_t req, unsigned char packet_ctrl, unsigned char frame_ctrl) {
+void prepare_control_frame(frame_t *frame, off_t file_size, size_t filename_len, char *filename, unsigned char addr, request_t req, unsigned char packet_ctrl, unsigned char frame_ctrl) {
     file_t *file_info = malloc(sizeof(file_t));
     file_info->file_size = file_size;
     file_info->filename = malloc(filename_len);
