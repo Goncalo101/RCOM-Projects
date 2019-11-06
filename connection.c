@@ -75,13 +75,13 @@ int llwrite(int fd, unsigned char *buffer, int length) {
 
 int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
     int bytes_read = 0;
-    while (cmd[2] != cmd_byte) {
+    do { 
         bytes_read = llread(fd, cmd);
         if (bytes_read == ERROR) {
             return ERROR;
         }
         if (cmd[bytes_read - 3] == 0x01 || cmd[bytes_read - 3] == 0x81) return -2;
-    }
+    } while (cmd[bytes_read - 3] != cmd_byte);
 
     return bytes_read;
 }
@@ -92,6 +92,7 @@ int send_packet(int fd, frame_t *frame) {
 
     unsigned char cmd;
     unsigned char buf[TYPE_A_PACKET_LENGTH + 1];
+    bzero(buf, TYPE_A_PACKET_LENGTH + 1);
     if (frame->frame_ctrl == 0) {
         cmd = 0x85;
     } else if (frame->frame_ctrl == 0x40) {
@@ -111,7 +112,7 @@ int send_packet(int fd, frame_t *frame) {
     }
     if (counter <= 0) exit(-1);
     
-    free(frame_str);
+    // free(frame_str);
 
     return bytes_written;
 }

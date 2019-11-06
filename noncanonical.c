@@ -46,21 +46,12 @@ int main(int argc, char **argv) {
 
   register_signal_handler();  
 
-  char *filename;
-  if(argc == 4){
-    filename = malloc(strlen(argv[3]) + 1);
-    strcpy(filename, argv[3]);
-  } 
-  else filename = NULL;
-
   start_app(port, mode);
 
-  if (mode == 0)
-    send_file(filename);
-  else if (mode == 1)
+  if (mode == 0) {
+    send_file(argv[3]);
+  } else if (mode == 1)
     receive_file();
-
-  free(filename);
 
   return 0;
 }

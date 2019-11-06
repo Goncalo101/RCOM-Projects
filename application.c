@@ -84,8 +84,8 @@ int send_file(char *filename) {
         ++counter;
     }
 
-    free(packet.fragment);
-    free(file_fragment);
+    // free(packet.fragment);
+    // free(file_fragment);
 
     close(file_desc);
 	

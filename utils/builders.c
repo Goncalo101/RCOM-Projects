@@ -56,7 +56,7 @@ void build_control_packet(file_t *file_info, size_t *length, unsigned char **pac
     sprintf((char *) filename_tlv, "%c%c", FILE_NAME_PARAM, (unsigned char) filename_len);
     memcpy(&filename_tlv[2], file_info->filename, filename_len);
     memcpy(&((*packet)[11]), filename_tlv, filename_len + 2);
-    free(filename_tlv);
+    // free(filename_tlv);
 }
 
 void build_frame(frame_t *frame, unsigned char **frame_str) {
@@ -75,7 +75,7 @@ void build_frame(frame_t *frame, unsigned char **frame_str) {
 
     int bcc2 = calc_bcc2(packet, frame->length);
 
-    *frame_str = malloc(frame->length + FRAME_I_LENGTH);
+    *frame_str = malloc(frame->length + FRAME_I_LENGTH + 1);
     sprintf((char *) (*frame_str), "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
     if (frame->request_type == DATA_REQ) {
