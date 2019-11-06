@@ -32,7 +32,7 @@ void build_data_packet(unsigned char *fragment, unsigned char **packet, size_t *
     *packet = calloc((*length) + PACKET_HEAD_LEN + 1, 1);
     printf ("LENGTH / 255: %d, length: %d\n", (unsigned char) ((*length) / 255), (unsigned char)(*length));
     sprintf((char *) (*packet), "%c%c%c%c", DATA_PACKET, seq_no++, (unsigned char) ((*length) / 255), (unsigned char) ((*length) % 255));
-    memcpy(&(*packet[4]), fragment, *length);
+    memcpy(&((*packet)[4]), fragment, *length);
 
     *length += PACKET_HEAD_LEN;
     *packet = realloc(*packet, *length);
@@ -50,18 +50,17 @@ void build_control_packet(file_t *file_info, size_t *length, unsigned char **pac
     unsigned char file_size_buf[8];
     int_to_string(file_info->file_size, file_size_buf);
 
-    memcpy(&(*packet[3]), file_size_buf, 8);
+    memcpy(&((*packet)[3]), file_size_buf, 8);
 
     unsigned char *filename_tlv = malloc(filename_len + 2);
     sprintf((char *) filename_tlv, "%c%c", FILE_NAME_PARAM, (unsigned char) filename_len);
     memcpy(&filename_tlv[2], file_info->filename, filename_len);
-    memcpy(&(*packet[11]), filename_tlv, filename_len + 2);
-
+    memcpy(&((*packet)[11]), filename_tlv, filename_len + 2);
     free(filename_tlv);
 }
 
 void build_frame(frame_t *frame, unsigned char **frame_str) {
-    unsigned char *packet;
+    unsigned char *packet = malloc(1);
     printf("building control packet with initial length %ld\n", frame->length);
     switch (frame->request_type) {
         case DATA_REQ:
@@ -90,9 +89,9 @@ void build_frame(frame_t *frame, unsigned char **frame_str) {
       str_replace(&packet, bcc2, esc_bcc, &(frame->length));
     }
 
-    memcpy(&(*frame_str[4]), packet, frame->length);
-    sprintf((char*) (&(*frame_str[4 + (frame->length)])), "%c%c", bcc2, FLAG);
-    free(packet);
+    memcpy(&((*frame_str)[4]), packet, frame->length);
+    sprintf((char*) (&((*frame_str)[4 + (frame->length)])), "%c%c", bcc2, FLAG);
+    // free(packet);
     frame->length += FRAME_I_LENGTH;
 }
 

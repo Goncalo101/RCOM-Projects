@@ -11,12 +11,12 @@ void str_replace(unsigned char **target, unsigned char needle, const char *repla
     memcpy(buffer, *target, 4);
 
     for (size_t i = 4, j = 4; i < original_length; ++i, ++j) {
-      if (*target[i] == needle) {
+      if ((*target)[i] == needle) {
           ++(*length);
           memcpy((char *) (&buffer[j]), replacement, strlen(replacement));
           ++j;
       } else {
-        memcpy(&buffer[j], &(*target[i]), 1);
+        memcpy(&buffer[j], &((*target)[i]), 1);
       }
     }
 

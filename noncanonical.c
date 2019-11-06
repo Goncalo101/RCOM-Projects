@@ -17,7 +17,9 @@ void alarm_handler() { printf("Received alarm.\n"); }
 
 void register_signal_handler() {
   struct sigaction action;
+  sigaction(SIGALRM, NULL, &action);
   action.sa_handler = alarm_handler;
+  
   sigaction(SIGALRM, &action, NULL);
 }
 
