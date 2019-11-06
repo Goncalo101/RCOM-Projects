@@ -45,14 +45,15 @@ int send_file(char *filename) {
 
     printf("sending %s (name length %ld, file size %ld)\n", frame.file_info->filename, frame.length, file_size);
 
+
     // send frame
     if (send_packet(fd, &frame) == ERROR) return ERROR;
+    free(frame.file_info->filename);
+    free(frame.file_info);
 
     // send file
     off_t total_read = 0;
     int bytes_written;
-
-    unsigned char *file_fragment = malloc(MAX_FRAGMENT_SIZE);
 
     // prepare data frame
     frame.request_type = DATA_REQ;
@@ -63,17 +64,14 @@ int send_file(char *filename) {
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
 
     while (total_read < file_size) {
-        int bytes_read = read(file_desc, file_fragment, MAX_FRAGMENT_SIZE);
+        int bytes_read = read(file_desc, packet.fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
 
         if (bytes_read < MAX_FRAGMENT_SIZE)
-            file_fragment = realloc(file_fragment, bytes_read);
+            packet.fragment = realloc(packet.fragment, bytes_read);
 
         if (bytes_read == ERROR) perror("ERRO");
-        printf("BYTES READ: %ld\n", total_read);
-
-        packet.fragment = realloc(packet.fragment, bytes_read);
-        memcpy(packet.fragment, file_fragment, bytes_read);
+        printf("BYTES READ: %ld, counter %d\n", total_read, counter);
 
         frame.packet = &packet;
         frame.length = bytes_read;

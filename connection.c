@@ -38,6 +38,7 @@ int llread(int fd, unsigned char *buffer) {
         printf(" %02x ", buffer[bytes_read]);
         #endif
         accept = state_machine(buffer[bytes_read]);
+        if (accept == -5) continue;
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
@@ -87,7 +88,7 @@ int check_cmd(int fd, unsigned char cmd_byte, unsigned char *cmd) {
 }
 
 int send_packet(int fd, frame_t *frame) {
-    unsigned char *frame_str;
+    unsigned char *frame_str = NULL;
     build_frame(frame, &frame_str);
 
     unsigned char cmd;
@@ -112,7 +113,7 @@ int send_packet(int fd, frame_t *frame) {
     }
     if (counter <= 0) exit(-1);
     
-    // free(frame_str);
+    free(frame_str);
 
     return bytes_written;
 }

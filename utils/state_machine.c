@@ -106,6 +106,7 @@ int state_machine(unsigned char rec_byte) {
     case START:
         if (rec_byte == FLAG) 
             state = FLAG_RCV;
+        else return -5;
         break;
     case FLAG_RCV:
         if (rec_byte == SENDER_CMD || rec_byte == RECEIVER_CMD) {

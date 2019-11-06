@@ -29,13 +29,12 @@ void int_to_string(off_t integer, unsigned char string[8]) {
 void build_data_packet(unsigned char *fragment, unsigned char **packet, size_t *length) {
     static unsigned char seq_no = 0;
 
-    *packet = calloc((*length) + PACKET_HEAD_LEN + 1, 1);
-    printf ("LENGTH / 255: %d, length: %d\n", (unsigned char) ((*length) / 255), (unsigned char)(*length));
+    printf ("LENGTH / 255: %ld, length: %ld\n", ((*length) / 255), (*length));
+    *packet = realloc(*packet, (*length) + PACKET_HEAD_LEN);
+    puts("asdasdasdasdasd");
     sprintf((char *) (*packet), "%c%c%c%c", DATA_PACKET, seq_no++, (unsigned char) ((*length) / 255), (unsigned char) ((*length) % 255));
     memcpy(&((*packet)[4]), fragment, *length);
-
     *length += PACKET_HEAD_LEN;
-    *packet = realloc(*packet, *length);
 }
 
 
@@ -43,7 +42,7 @@ void build_control_packet(file_t *file_info, size_t *length, unsigned char **pac
     size_t filename_len = strlen(file_info->filename);
 
     *length = 5 + filename_len + 8;
-    *packet = calloc(*length, 1);
+    *packet = realloc(*packet, *length);
 
     sprintf((char *) (*packet), "%c%c%c", ctrl, FILE_SIZE_PARAM, 8);
 
@@ -56,12 +55,11 @@ void build_control_packet(file_t *file_info, size_t *length, unsigned char **pac
     sprintf((char *) filename_tlv, "%c%c", FILE_NAME_PARAM, (unsigned char) filename_len);
     memcpy(&filename_tlv[2], file_info->filename, filename_len);
     memcpy(&((*packet)[11]), filename_tlv, filename_len + 2);
-    // free(filename_tlv);
+    free(filename_tlv);
 }
 
 void build_frame(frame_t *frame, unsigned char **frame_str) {
     unsigned char *packet = malloc(1);
-    printf("building control packet with initial length %ld\n", frame->length);
     switch (frame->request_type) {
         case DATA_REQ:
             printf("building data packet\n");
@@ -75,7 +73,9 @@ void build_frame(frame_t *frame, unsigned char **frame_str) {
 
     int bcc2 = calc_bcc2(packet, frame->length);
 
-    *frame_str = malloc(frame->length + FRAME_I_LENGTH + 1);
+    printf("alloc memory for packet with length %ld\n", frame->length);
+    *frame_str = (unsigned char *) malloc(frame->length + FRAME_I_LENGTH + 40000000);
+    puts("cenas coiso");
     sprintf((char *) (*frame_str), "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
     if (frame->request_type == DATA_REQ) {
@@ -88,10 +88,11 @@ void build_frame(frame_t *frame, unsigned char **frame_str) {
       char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2) ^ 0x20};
       str_replace(&packet, bcc2, esc_bcc, &(frame->length));
     }
+    puts("cenas coisinho");
 
     memcpy(&((*frame_str)[4]), packet, frame->length);
-    sprintf((char*) (&((*frame_str)[4 + (frame->length)])), "%c%c", bcc2, FLAG);
     // free(packet);
+    sprintf((char*) (&((*frame_str)[4 + (frame->length)])), "%c%c", bcc2, FLAG);
     frame->length += FRAME_I_LENGTH;
 }
 
