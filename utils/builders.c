@@ -29,9 +29,10 @@ void int_to_string(off_t integer, unsigned char string[8]) {
 void build_data_packet(unsigned char *fragment, unsigned char **packet, size_t *length) {
     static unsigned char seq_no = 0;
 
+    #ifdef debug
     printf ("LENGTH / 255: %ld, length: %ld\n", ((*length) / 255), (*length));
+    #endif
     *packet = realloc(*packet, (*length) + PACKET_HEAD_LEN);
-    puts("asdasdasdasdasd");
     sprintf((char *) (*packet), "%c%c%c%c", DATA_PACKET, seq_no++, (unsigned char) ((*length) / 255), (unsigned char) ((*length) % 255));
     memcpy(&((*packet)[4]), fragment, *length);
     *length += PACKET_HEAD_LEN;
@@ -62,20 +63,25 @@ void build_frame(frame_t *frame, unsigned char **frame_str) {
     unsigned char *packet = malloc(1);
     switch (frame->request_type) {
         case DATA_REQ:
+            #ifdef debug
             printf("building data packet\n");
+            #endif
             build_data_packet(frame->packet->fragment, &packet, &(frame->length));
             break;
         case CTRL_REQ:
+            #ifdef debug
             printf("building control packet\n");
+            #endif
             build_control_packet(frame->file_info, &(frame->length), &packet, frame->packet_ctrl);
         default:break;
     }
 
     int bcc2 = calc_bcc2(packet, frame->length);
 
+    #ifdef debug
     printf("alloc memory for packet with length %ld\n", frame->length);
+    #endif
     *frame_str = (unsigned char *) malloc(frame->length + FRAME_I_LENGTH + 40000000);
-    puts("cenas coiso");
     sprintf((char *) (*frame_str), "%c%c%c%c", FLAG, frame->addr, frame->frame_ctrl, BCC(frame->addr, frame->frame_ctrl));
 
     if (frame->request_type == DATA_REQ) {
@@ -88,10 +94,8 @@ void build_frame(frame_t *frame, unsigned char **frame_str) {
       char esc_bcc[] = {ESCAPE, (unsigned char)(bcc2) ^ 0x20};
       str_replace(&packet, bcc2, esc_bcc, &(frame->length));
     }
-    puts("cenas coisinho");
 
     memcpy(&((*frame_str)[4]), packet, frame->length);
-    // free(packet);
     sprintf((char*) (&((*frame_str)[4 + (frame->length)])), "%c%c", bcc2, FLAG);
     frame->length += FRAME_I_LENGTH;
 }

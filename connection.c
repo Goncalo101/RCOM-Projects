@@ -258,7 +258,7 @@ int llopen(int port, int mode) {
     connection_mode = mode;
 
     sprintf(device, "/dev/ttyS%d", port);
-    puts(device);
+    printf("Opened port %s\n successfuly", device);
 
     int fd = open(device, O_RDWR | O_NOCTTY);
     if (fd == ERROR) {

@@ -64,14 +64,14 @@ int send_file(char *filename) {
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
 
     while (total_read < file_size) {
+        printf("sending fragment %d\n", counter);
         int bytes_read = read(file_desc, packet.fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
 
         if (bytes_read < MAX_FRAGMENT_SIZE)
             packet.fragment = realloc(packet.fragment, bytes_read);
 
-        if (bytes_read == ERROR) perror("ERRO");
-        printf("BYTES READ: %ld, counter %d\n", total_read, counter);
+        if (bytes_read == ERROR) perror("read error");
 
         frame.packet = &packet;
         frame.length = bytes_read;
@@ -81,9 +81,6 @@ int send_file(char *filename) {
         if (bytes_written == ERROR) exit(-1);
         ++counter;
     }
-
-    // free(packet.fragment);
-    // free(file_fragment);
 
     close(file_desc);
 	
@@ -108,8 +105,10 @@ int receive_file() {
     free(frame.file_info);
 
     frame.packet = malloc(sizeof(packet_t));
-
+    
+    int counter = 0;
     while (bytes_read < file_size) {
+        printf("receiving fragment %d\n", ++counter);
         int read = get_packet(fd, &frame);
         if (read == ERROR) exit(-1);
         else if(read == 0)

@@ -9,7 +9,6 @@ void str_replace(unsigned char **target, unsigned char needle, const char *repla
     size_t original_length = *length;
     unsigned char *buffer = calloc(2 * original_length, 1);
     memcpy(buffer, *target, 4);
-    printf("new length %ld\n", *length);
 
     for (size_t i = 4, j = 4; i < original_length; ++i, ++j) {
       if ((*target)[i] == needle) {
