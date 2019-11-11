@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -17,10 +18,14 @@
 
 static struct termios oldtio;
 static int connection_mode = 0;
+static struct timespec old_tp;
+static struct timespec new_tp;
+static long elapsed = 0;
 
 int llread(int fd, unsigned char *buffer) {
     int bytes_read = 0, accept = 0, res = 0, alarm_count = MAX_ALARM_COUNT;
-
+    
+    clock_gettime(CLOCK_REALTIME, &old_tp);
     do {
         alarm(TIMEOUT);
         res = read(fd, &buffer[bytes_read], sizeof(unsigned char));
@@ -42,6 +47,10 @@ int llread(int fd, unsigned char *buffer) {
         bytes_read++;
 
     } while (!accept && alarm_count > 0);
+    clock_gettime(CLOCK_REALTIME, &new_tp);
+
+    elapsed += (new_tp.tv_nsec - old_tp.tv_nsec);
+
     if(accept == -2) return accept;
     alarm(0);
     printf("\nread %d bytes, accept %d\n", bytes_read, accept);
@@ -57,6 +66,7 @@ int llread(int fd, unsigned char *buffer) {
 int llwrite(int fd, unsigned char *buffer, int length) {
     int bytes_written = 0, res;
 
+    clock_gettime(CLOCK_REALTIME, &old_tp);
     for (; bytes_written < length; ++bytes_written) {
         res = write(fd, &buffer[bytes_written], sizeof(unsigned char));
 
@@ -68,6 +78,8 @@ int llwrite(int fd, unsigned char *buffer, int length) {
         printf(" %02x ", buffer[bytes_written]);
         #endif
     }
+    clock_gettime(CLOCK_REALTIME, &new_tp);
+    elapsed += (new_tp.tv_nsec - old_tp.tv_nsec);
 
     printf("\nwrote %d bytes\n", bytes_written);
 
@@ -258,7 +270,7 @@ int llopen(int port, int mode) {
     connection_mode = mode;
 
     sprintf(device, "/dev/ttyS%d", port);
-    printf("Opened port %s\n successfuly", device);
+    printf("Opened port %s successfully\n", device);
 
     int fd = open(device, O_RDWR | O_NOCTTY);
     if (fd == ERROR) {
@@ -297,4 +309,8 @@ int llclose(int fd) {
   }
   close(fd);
   return bytes_written;
+}
+
+long get_elapsed() {
+    return elapsed;
 }

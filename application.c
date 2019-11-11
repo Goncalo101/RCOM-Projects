@@ -82,6 +82,9 @@ int send_file(char *filename) {
         ++counter;
     }
 
+    long elapsed = get_elapsed();
+    printf("elapsed time %ld ms\n", elapsed / 1000000);
+
     close(file_desc);
 	
     if(llclose(fd) <= 0)
@@ -116,6 +119,10 @@ int receive_file() {
         write(file_desc, frame.packet->fragment, read);
         bytes_read += read;
     }
+
+    long elapsed = get_elapsed();
+    printf("elapsed time %ld ms\n", elapsed / 1000000);
+
 
     free(frame.packet);
     close(file_desc);

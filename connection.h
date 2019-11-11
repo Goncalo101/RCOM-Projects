@@ -20,5 +20,6 @@ int llopen(int port, int mode);
 int send_packet(int fd, frame_t *frame);
 int get_packet(int fd, frame_t *frame);
 int llclose(int fd);
+long get_elapsed();
 
 #endif
