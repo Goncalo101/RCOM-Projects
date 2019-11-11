@@ -104,7 +104,6 @@ int send_packet(int fd, frame_t *frame) {
     int bytes_written = llwrite(fd, frame_str, frame->length), counter = MAX_RETRIES;
     int cmd_stat = 0;
     while ((cmd_stat = check_cmd(fd, cmd, buf)) < 0 && counter > 0) {
-        if(cmd_stat == -1) --counter;
         bytes_written = llwrite(fd, frame_str, frame->length);
 		if (frame->frame_ctrl == 0) {
         	cmd = 0x85;
@@ -135,7 +134,7 @@ int get_packet(int fd, frame_t *frame) {
     int bytes_read = 0, counter = MAX_RETRIES;
     unsigned char cmd;
 
-    while ((bytes_read = llread(fd, buffer)) < 0 && --counter > 0) {
+    while ((bytes_read = llread(fd, buffer)) < 0) {
         if (bytes_read == ERROR) {
             return ERROR;
         } else if(bytes_read == -2) {

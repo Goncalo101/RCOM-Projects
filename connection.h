@@ -2,9 +2,9 @@
 #define CONNECTION_H
 
 #define BAUDRATE B38400
-#define MAX_FRAGMENT_SIZE 10000
+#define MAX_FRAGMENT_SIZE 65279
 
-#define MAX_RETRIES 3
+#define MAX_RETRIES 100
 #define MAX_ALARM_COUNT 3
 #define TIMEOUT 5
 #define CTRL_POS 4

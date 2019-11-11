@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../flags.h"
 #include "builders.h"
@@ -14,6 +15,7 @@ int calc_bcc2(unsigned char *packet, size_t length){
     for (size_t i = 2; i < length; ++i){
         bcc2 = BCC(bcc2, packet[i]);
     }
+    srand(time(NULL));
     long int cenas = random();
     if (cenas >= 0.7*RAND_MAX) bcc2 += 1;
 
