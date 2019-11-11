@@ -1,0 +1,43 @@
+variando a baudrate 
+try 1
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 963 ms
+
+try 2
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 962 ms
+
+try 3
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 962 ms
+
+try 4
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 962 ms
+
+variando packet size
+try 1
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 962 ms
+
+try 2
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 962 ms
+
+try 3
+elapsed time 2880 ms
+elapsed time 1922 ms
+elapsed time 961 ms
+elapsed time 962 ms

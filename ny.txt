@@ -1,0 +1,70 @@
+variando baudrate
+try 1
+elapsed time 53565 ms
+elapsed time 35704 ms
+elapsed time 17859 ms
+elapsed time 17861 ms
+
+try 2
+elapsed time 53566 ms
+elapsed time 35704 ms
+elapsed time 17859 ms
+elapsed time 17861 ms
+
+try 3
+elapsed time 53565 ms
+elapsed time 35704 ms
+elapsed time 17859 ms
+elapsed time 17861 ms
+
+try 4
+elapsed time 53565 ms
+elapsed time 35703 ms
+elapsed time 17859 ms
+elapsed time 17860 ms
+
+variando packet size (33000)
+try 1
+elapsed time 53582 ms
+elapsed time 35728 ms
+elapsed time 17864 ms
+elapsed time 17857 ms
+
+try 2
+elapsed time 53583 ms
+elapsed time 35729 ms
+elapsed time 17865 ms
+elapsed time 17857 ms
+
+try 3
+elapsed time 53582 ms
+elapsed time 35730 ms
+elapsed time 17864 ms
+elapsed time 17857 ms
+
+variando packet size (10000)
+elapsed time 53686 ms
+elapsed time 35778 ms
+elapsed time 17903 ms
+elapsed time 17905 ms
+
+elapsed time 53687 ms
+elapsed time 35780 ms
+elapsed time 17904 ms
+elapsed time 17906 ms
+
+variando fer
+elapsed time 70725 ms
+elapsed time 35706 ms
+elapsed time 17861 ms
+elapsed time 17863 ms
+
+elapsed time 53575 ms
+elapsed time 35705 ms
+elapsed time 17860 ms
+elapsed time 17861 ms
+
+elapsed time 104988 ms
+elapsed time 35706 ms
+elapsed time 17862 ms
+elapsed time 17862 ms
