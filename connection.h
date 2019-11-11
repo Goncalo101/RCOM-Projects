@@ -12,11 +12,12 @@
 #define INTERRUPTED -2
 #define ERROR -1
 
+#include <termios.h>
 #include "types.h"
 
 typedef int (*sender_func)(int);
 
-int llopen(int port, int mode);
+int llopen(int port, int mode, speed_t baudrate);
 int send_packet(int fd, frame_t *frame);
 int get_packet(int fd, frame_t *frame);
 int llclose(int fd);

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 
 #include "application.h"
 
@@ -25,6 +26,7 @@ void register_signal_handler() {
 
 int main(int argc, char **argv) {
   int mode;
+  speed_t baudrate[] = {B38400, B57600, B115200, B230400};
 
   if(strcmp("receiver", argv[2]) == 0)
     mode = 1;
@@ -46,12 +48,17 @@ int main(int argc, char **argv) {
 
   register_signal_handler();  
 
-  start_app(port, mode);
+  for (int i = 0; i < 4; i++)
+  {
+    printf("STARTING TEST %d WITH SPEED %d\n", i, baudrate[i]);
+    start_app(port, mode, baudrate[i]);
+    if (mode == 0) {
+      send_file(argv[3]);
+    } else if (mode == 1)
+      receive_file();
+  }
+  
 
-  if (mode == 0) {
-    send_file(argv[3]);
-  } else if (mode == 1)
-    receive_file();
 
   return 0;
 }

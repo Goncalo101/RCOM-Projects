@@ -221,7 +221,7 @@ int send_ack(int fd) {
     return bytes_written;
 }
 
-void terminal_setup(int fd) {
+void terminal_setup(int fd, speed_t baudrate) {
     struct termios newtio;
 
     int tc_attr_status = tcgetattr(fd, &oldtio);
@@ -233,7 +233,7 @@ void terminal_setup(int fd) {
     }
 
     bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    newtio.c_cflag = baudrate | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
 
@@ -254,7 +254,7 @@ void terminal_setup(int fd) {
     printf("New termios structure set\n");
 }
 
-int llopen(int port, int mode) {
+int llopen(int port, int mode, speed_t baudrate) {
     char device[11];
     connection_mode = mode;
 
@@ -267,7 +267,7 @@ int llopen(int port, int mode) {
         return fd;
     }
 
-    terminal_setup(fd);
+    terminal_setup(fd, baudrate);
 
     sender_func functions[] = {send_set, send_ack};
     functions[mode](fd);

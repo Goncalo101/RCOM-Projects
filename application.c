@@ -134,8 +134,8 @@ int receive_file() {
     return 0;
 }
 
-void start_app(int port, int mode) {
-    fd = llopen(port, mode);
+void start_app(int port, int mode, speed_t baudrate) {
+    fd = llopen(port, mode, baudrate);
     if (fd == -1) {
         perror("llopen error");
         exit(-1);
