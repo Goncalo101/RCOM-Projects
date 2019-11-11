@@ -1,7 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#define BAUDRATE B115200
+#define BAUDRATE B38400
 #define MAX_FRAGMENT_SIZE 65279
 
 #define MAX_RETRIES 3
@@ -20,6 +20,5 @@ int llopen(int port, int mode);
 int send_packet(int fd, frame_t *frame);
 int get_packet(int fd, frame_t *frame);
 int llclose(int fd);
-long get_elapsed();
 
 #endif

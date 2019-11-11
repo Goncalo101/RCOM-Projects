@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 
 #include <fcntl.h>
@@ -15,6 +16,8 @@
 #include "types.h"
 
 static int fd = 0;
+static struct timeval new_tp;
+static struct timeval old_tp;
 
 off_t get_file_size(int fd) {
     struct stat file_stat;
@@ -62,7 +65,8 @@ int send_file(char *filename) {
 
     packet_t packet;
     packet.fragment = malloc(MAX_FRAGMENT_SIZE);
-
+        
+    gettimeofday(&old_tp, NULL);
     while (total_read < file_size) {
         printf("sending fragment %d\n", counter);
         int bytes_read = read(file_desc, packet.fragment, MAX_FRAGMENT_SIZE);
@@ -81,9 +85,10 @@ int send_file(char *filename) {
         if (bytes_written == ERROR) exit(-1);
         ++counter;
     }
+    gettimeofday(&new_tp, NULL);
 
-    long elapsed = get_elapsed();
-    printf("elapsed time %ld ms\n", elapsed / 1000000);
+    long elapsed = (new_tp.tv_sec-old_tp.tv_sec)*1000000 + new_tp.tv_usec-old_tp.tv_usec;
+    printf("elapsed time %ld ms\n", elapsed / 1000);
 
     close(file_desc);
 	
@@ -119,10 +124,6 @@ int receive_file() {
         write(file_desc, frame.packet->fragment, read);
         bytes_read += read;
     }
-
-    long elapsed = get_elapsed();
-    printf("elapsed time %ld ms\n", elapsed / 1000000);
-
 
     free(frame.packet);
     close(file_desc);
