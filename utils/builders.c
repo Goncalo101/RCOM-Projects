@@ -14,6 +14,9 @@ int calc_bcc2(unsigned char *packet, size_t length){
     for (size_t i = 2; i < length; ++i){
         bcc2 = BCC(bcc2, packet[i]);
     }
+    long int cenas = random();
+    if (cenas >= 0.7*RAND_MAX) bcc2 += 1;
+
     return bcc2;
 }
 

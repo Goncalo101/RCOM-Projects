@@ -46,7 +46,7 @@ int send_file(char *filename) {
     prepare_control_frame(&frame, file_size, filename_len, filename, SENDER_CMD, CTRL_REQ, START_PACKET, control[counter % 2]);
     ++counter;
 
-    printf("sending %s (name length %ld, file size %ld)\n", frame.file_info->filename, frame.length, file_size);
+    // printf("sending %s (name length %ld, file size %ld)\n", frame.file_info->filename, frame.length, file_size);
 
 
     // send frame
@@ -68,7 +68,7 @@ int send_file(char *filename) {
         
     gettimeofday(&old_tp, NULL);
     while (total_read < file_size) {
-        printf("sending fragment %d\n", counter);
+        // printf("sending fragment %d\n", counter);
         int bytes_read = read(file_desc, packet.fragment, MAX_FRAGMENT_SIZE);
         total_read += bytes_read;
 
@@ -103,7 +103,7 @@ int receive_file() {
     frame.file_info = malloc(sizeof(file_t));
     get_packet(fd, &frame);
 
-    printf("received file size: %ld, file name: %s\n", frame.file_info->file_size, frame.file_info->filename);
+    // printf("received file size: %ld, file name: %s\n", frame.file_info->file_size, frame.file_info->filename);
 
     off_t bytes_read = 0;
     off_t file_size = frame.file_info->file_size;
@@ -114,9 +114,8 @@ int receive_file() {
 
     frame.packet = malloc(sizeof(packet_t));
     
-    int counter = 0;
     while (bytes_read < file_size) {
-        printf("receiving fragment %d\n", ++counter);
+        // printf("receiving fragment %d\n", ++counter);
         int read = get_packet(fd, &frame);
         if (read == ERROR) exit(-1);
         else if(read == 0)

@@ -27,7 +27,7 @@ int llread(int fd, unsigned char *buffer) {
         if (res == ERROR) {
             if (errno == EINTR) {
                 --alarm_count;
-                printf("read timeout %d\n", MAX_ALARM_COUNT - alarm_count);
+                // printf("read timeout %d\n", MAX_ALARM_COUNT - alarm_count);
                 continue;
             }
 
@@ -35,7 +35,7 @@ int llread(int fd, unsigned char *buffer) {
             return ERROR;
         }
         #ifdef debug
-        printf(" %02x ", buffer[bytes_read]);
+        // printf(" %02x ", buffer[bytes_read]);
         #endif
         accept = state_machine(buffer[bytes_read]);
         if (accept == -5) continue;
@@ -45,10 +45,10 @@ int llread(int fd, unsigned char *buffer) {
 
     if(accept == -2) return accept;
     alarm(0);
-    printf("\nread %d bytes, accept %d\n", bytes_read, accept);
+    // printf("\nread %d bytes, accept %d\n", bytes_read, accept);
 
     if (alarm_count <= 0) {
-        printf("Alarm limit reached.\n");
+        // printf("Alarm limit reached.\n");
         return ERROR;
     }
 
@@ -66,11 +66,11 @@ int llwrite(int fd, unsigned char *buffer, int length) {
             return ERROR;
         }
         #ifdef debug
-        printf(" %02x ", buffer[bytes_written]);
+        // printf(" %02x ", buffer[bytes_written]);
         #endif
     }
 
-    printf("\nwrote %d bytes\n", bytes_written);
+    // printf("\nwrote %d bytes\n", bytes_written);
 
     return bytes_written;
 }
@@ -150,7 +150,7 @@ int get_packet(int fd, frame_t *frame) {
     }
 
     if (counter <= 0) {
-        printf("number of tries exceeded (connection lost?), exiting\n");
+        // printf("number of tries exceeded (connection lost?), exiting\n");
         exit(-1);
     }
 
@@ -251,7 +251,7 @@ void terminal_setup(int fd, speed_t baudrate) {
         exit(ERROR);
     }
 
-    printf("New termios structure set\n");
+    // printf("New termios structure set\n");
 }
 
 int llopen(int port, int mode, speed_t baudrate) {
@@ -259,7 +259,7 @@ int llopen(int port, int mode, speed_t baudrate) {
     connection_mode = mode;
 
     sprintf(device, "/dev/ttyS%d", port);
-    printf("Opened port %s successfully\n", device);
+    // printf("Opened port %s successfully\n", device);
 
     int fd = open(device, O_RDWR | O_NOCTTY);
     if (fd == ERROR) {

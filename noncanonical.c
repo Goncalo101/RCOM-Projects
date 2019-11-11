@@ -14,7 +14,8 @@
 
 volatile int STOP = FALSE;
 
-void alarm_handler() { printf("Received alarm.\n"); }
+void alarm_handler() { // printf("Received alarm.\n"); 
+}
 
 void register_signal_handler() {
   struct sigaction action;
@@ -40,7 +41,7 @@ int main(int argc, char **argv) {
         ((strcmp("/dev/ttyS0", argv[1])!=0) &&
         (strcmp("/dev/ttyS1", argv[1])!=0) &&
         (strcmp("/dev/ttyS4", argv[1])!=0)) || (mode == -1)) {
-    printf("Usage:\tnserial SerialPort mode filename (opt)\n\tex: nserial /dev/ttyS1 sender pinguim.gif\n\tex: nserial /dev/ttyS1 receiver\n");
+    // printf("Usage:\tnserial SerialPort mode filename (opt)\n\tex: nserial /dev/ttyS1 sender pinguim.gif\n\tex: nserial /dev/ttyS1 receiver\n");
     exit(1);
   }
 
@@ -50,7 +51,7 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < 4; i++)
   {
-    printf("STARTING TEST %d WITH SPEED %d\n", i, baudrate[i]);
+    // printf("STARTING TEST %d WITH SPEED %d\n", i, baudrate[i]);
     start_app(port, mode, baudrate[i]);
     if (mode == 0) {
       send_file(argv[3]);
