@@ -56,7 +56,7 @@ int parse_user_info(char *user, char *password, char *host, char *url_path, char
     memcpy(password, &info[colon_index + 1], at_index - colon_index - 1);
     puts(password);
 
-    memcpy(host, &info[at_index + 2], slash_index - at_index - 2);
+    memcpy(host, &info[at_index + 1], slash_index - at_index - 1);
     puts(host);
 
     memcpy(url_path, &info[slash_index + 1], strlen(info) - slash_index - 1);
@@ -78,13 +78,15 @@ int main(int argc, char const *argv[])
     char *password = malloc(MAX_STR_SIZE);
     char *url_path = malloc(MAX_STR_SIZE);
 
-    hostent_t *h = getip(host);
-
-    if (parse_user_info(user, password, host, url_path, &argv[1][7]) == -1)
+    if (parse_user_info(user, password, host, url_path, &argv[1][6]) == -1)
     {
         printf("Usage: ./download ftp://[<user>:<password>@]<host>/<url-path>");
         exit(-1);
     }
+
+    hostent_t *h = getip(host);
+
+    printf("user: %s, password: %s, host: %s, url_path: %s\n", user, password, host, url_path);
 
     free(user);
     free(host);
