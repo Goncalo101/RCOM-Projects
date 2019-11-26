@@ -1,34 +1,24 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#define READ 0
-#define WRITE 1
+#define BAUDRATE B115200
+#define MAX_FRAGMENT_SIZE 65279
 
-#define TIMEOUT 3
-#define MAX_ATTEMPTS 3
+#define MAX_RETRIES 3
+#define MAX_ALARM_COUNT 3
+#define TIMEOUT 5
+#define CTRL_POS 4
 
-#define START_PACKET_LENGTH 11
+#define INTERRUPTED -2
+#define ERROR -1
 
-#define PACKET_SIZE 64
+#include "types.h"
 
-#define TYPE_A_PACKET_LENGTH 5
-
-#define BAUDRATE B38400
-
-typedef int (*func_ptr)(int);
-
-int llread(int fd, char *buffer);
-
-int llwrite(int fd, char *buffer, int length);
+typedef int (*sender_func)(int);
 
 int llopen(int port, int mode);
-
+int send_packet(int fd, frame_t *frame);
+int get_packet(int fd, frame_t *frame);
 int llclose(int fd);
-
-int send_set(int fd);
-
-int send_ack(int fd);
-
-char *build_packet(char address, char control, char *data);
 
 #endif

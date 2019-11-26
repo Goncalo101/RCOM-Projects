@@ -1,15 +1,11 @@
 /*Non-Canonical Input Processing*/
 
-#include "connection.h"
-#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <termios.h>
-#include <unistd.h>
+
+#include "application.h"
 
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
@@ -17,42 +13,45 @@
 
 volatile int STOP = FALSE;
 
-void alarm_handler() { printf("entrou\n"); }
+void alarm_handler() { printf("Received alarm.\n"); }
+
+void register_signal_handler() {
+  struct sigaction action;
+  sigaction(SIGALRM, NULL, &action);
+  action.sa_handler = alarm_handler;
+  
+  sigaction(SIGALRM, &action, NULL);
+}
 
 int main(int argc, char **argv) {
-  int fd;
+  int mode;
 
-  /*if ( (argc < 3) ||
-       ((strcmp("/dev/ttyS0", argv[1])!=0) &&
-        (strcmp("/dev/ttyS4", argv[1])!=0) )) {
-    printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
+  if(strcmp("receiver", argv[2]) == 0)
+    mode = 1;
+  else if(strcmp("sender", argv[2]) == 0)
+    mode = 0;
+  else {
+    mode = -1;
+  }
+
+  if ((argc < 2) ||
+        ((strcmp("/dev/ttyS0", argv[1])!=0) &&
+        (strcmp("/dev/ttyS1", argv[1])!=0) &&
+        (strcmp("/dev/ttyS4", argv[1])!=0)) || (mode == -1)) {
+    printf("Usage:\tnserial SerialPort mode filename (opt)\n\tex: nserial /dev/ttyS1 sender pinguim.gif\n\tex: nserial /dev/ttyS1 receiver\n");
     exit(1);
-  }*/
+  }
 
-  struct sigaction action;
-  action.sa_handler = alarm_handler;
-  sigaction(SIGALRM, &action, NULL);
-  /*
-    Open serial port device for reading and writing and not as controlling tty
-    because we don't want to get killed if linenoise sends CTRL-C.
-  */
+  int port = atoi(&argv[1][9]);
 
-  /*
-    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-    leitura do(s) pr�ximo(s) caracter(es)
-  */
+  register_signal_handler();  
 
-  int mode = atoi(argv[2]);
-  fd = llopen(atoi(argv[1]), mode);
+  start_app(port, mode);
 
-  if (llclose(fd) != 0)
-    exit(-1);
-
-  // Reenvio
-
-  /*
-    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o
-  */
+  if (mode == 0) {
+    send_file(argv[3]);
+  } else if (mode == 1)
+    receive_file();
 
   return 0;
 }
