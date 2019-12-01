@@ -17,8 +17,10 @@
 #define SERVER_PORT 21
 #define USER_MSG "user"
 #define PASS_MSG "pass"
+#define PASV_MSG "pasv"
 
 #define NEED_PASS 331
+#define LOGIN_OK 230
 
 typedef struct hostent hostent_t;
 
@@ -29,12 +31,10 @@ typedef enum cmd {
 
 typedef int (*cmd_handler)(int sockfd, va_list args);
 
-hostent_t *getip(char *host, char *readable_addr)
-{
+hostent_t *getip(char *host, char *readable_addr) {
     hostent_t *h = gethostbyname(host);
 
-    if (h == NULL)
-    {
+    if (h == NULL) {
         herror("gethostbyname");
         exit(1);
     }
@@ -45,16 +45,14 @@ hostent_t *getip(char *host, char *readable_addr)
     return h;
 }
 
-int parse_user_info(char *username, char *password, char *host, char *url_path, char *info)
-{
+int parse_user_info(char *username, char *password, char *host, char *url_path, char *info) {
     // find colon, at and slash characters
     char *colon = strchr(info, ':');
     char *at = strchr(info, '@');
     char *slash = strchr(info, '/');
 
     // fail if any of those doesnt exist
-    if (colon == NULL || at == NULL || slash == NULL)
-    {
+    if (colon == NULL || at == NULL || slash == NULL) {
         return -1;
     }
 
@@ -143,12 +141,13 @@ int socket_recv(int sockfd, char *buffer, int length) {
 char *build_cmd(char *cmd_type, char *cmd_arg) {
     char *command = calloc(strlen(cmd_type) + strlen(cmd_arg) + 2, sizeof(char));
     sprintf(command, "%s %s\n", cmd_type, cmd_arg);
-    printf("> %s\n", command); 
+    printf("> %s\n", command);
 
     return command;
 }
 
 int handle_login(int sockfd, va_list args) {
+    int login_ret = 0;
     char *username = va_arg(args, char *);
     char *password = va_arg(args, char *);
     va_end(args);
@@ -174,13 +173,35 @@ int handle_login(int sockfd, va_list args) {
         printf("%s\n", response);
 
         free(pass_command);
+
+        status_code = atoi(response);
+        if (status_code != LOGIN_OK) login_ret = -1;
     }
     
+    free(response);
+    return login_ret;
+}
+
+int handle_pasv(int sockfd, va_list args) {
+    va_end(args);
+
+    char *pasv_command = calloc(strlen(PASV_MSG) + 2, sizeof(char));
+    sprintf(pasv_command, "%s\n", PASV_MSG);
+    printf("> %s\n", pasv_command);
+    
+    socket_send(sockfd, pasv_command);
+
+    char *response = calloc(1024, sizeof(char));
+    socket_recv(sockfd, response, 1024);
+
+    int status_code = atoi(response);
+    printf("%s\n", response);
+
     free(response);
     return 0;
 }
 
-static cmd_handler handlers[] =  {handle_login};
+static cmd_handler handlers[] =  {handle_login, handle_pasv};
 
 int send_cmd(int sockfd, cmd_t cmd, ...) {
     va_list args;
@@ -189,10 +210,8 @@ int send_cmd(int sockfd, cmd_t cmd, ...) {
     return handlers[cmd](sockfd, args);
 }
 
-int main(int argc, char *argv[])
-{
-    if (argc != 2)
-    {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
         printf("Usage: ./download ftp://[<username>:<password>@]<host>/<url-path>\n");
         exit(-1);
     }
@@ -202,8 +221,7 @@ int main(int argc, char *argv[])
     char *password = calloc(MAX_STR_SIZE, sizeof(char));
     char *url_path = calloc(MAX_STR_SIZE, sizeof(char));
 
-    if (parse_user_info(username, password, host, url_path, &argv[1][6]) == -1)
-    {
+    if (parse_user_info(username, password, host, url_path, &argv[1][6]) == -1) {
         printf("Usage: ./download ftp://[<username>:<password>@]<host>/<url-path>");
         exit(-1);
     }
@@ -218,6 +236,7 @@ int main(int argc, char *argv[])
     server_connect(sockfd, server_addr);
 
     send_cmd(sockfd, LOGIN_CMD, username, password);
+    send_cmd(sockfd, PASV_CMD);
 
     free(username);
     free(host);
