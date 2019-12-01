@@ -15,16 +15,19 @@
 #define MAX_STR_SIZE 50
 
 #define SERVER_PORT 21
-#define USER_MSG "user "
+#define USER_MSG "user"
+#define PASS_MSG "pass"
+
+#define NEED_PASS 331
 
 typedef struct hostent hostent_t;
-typedef int (*cmd_handler)(int sockfd, va_list args);
 
 typedef enum cmd {
-    USER_CMD,
-    PASS_CMD,
+    LOGIN_CMD,
     PASV_CMD
 } cmd_t;
+
+typedef int (*cmd_handler)(int sockfd, va_list args);
 
 hostent_t *getip(char *host, char *readable_addr)
 {
@@ -37,10 +40,6 @@ hostent_t *getip(char *host, char *readable_addr)
     }
 
     char *server_address = inet_ntoa(*((struct in_addr *)h->h_addr));
-
-    // printf("Host name  : %s\n", h->h_name);
-    // printf("IP Address : %s\n", server_address);
-    
     strcpy(readable_addr, server_address);
 
     return h;
@@ -106,8 +105,12 @@ void server_connect(int sockfd, const char *server_addr) {
 
     do {
         bytes_read = read(sockfd, &response[total_read], 1);
-        total_read += bytes_read;
+        if (bytes_read < 0) {
+            perror("read");
+            exit(-1);
+        }
 
+        total_read++;
     } while (strstr(response, "220 ") == NULL);
     
     printf("%s\n", response);
@@ -127,7 +130,6 @@ int socket_send(int sockfd, char *buffer) {
 }
 
 int socket_recv(int sockfd, char *buffer, int length) {
-    read(sockfd, buffer, 2);
     int bytes_read = read(sockfd, buffer, length);
 
     if (bytes_read < 0) {
@@ -138,37 +140,53 @@ int socket_recv(int sockfd, char *buffer, int length) {
     return bytes_read;
 }
 
-int handle_user(int sockfd, va_list args) {
+char *build_cmd(char *cmd_type, char *cmd_arg) {
+    char *command = calloc(strlen(cmd_type) + strlen(cmd_arg) + 2, sizeof(char));
+    sprintf(command, "%s %s\n", cmd_type, cmd_arg);
+    printf("> %s\n", command); 
+
+    return command;
+}
+
+int handle_login(int sockfd, va_list args) {
     char *username = va_arg(args, char *);
-    char *command = calloc(strlen(USER_MSG) + strlen(username) + 2, sizeof(char));
-    sprintf(command, "%s%s\n", USER_MSG, username);
+    char *password = va_arg(args, char *);
+    va_end(args);
 
-    printf("> %s\n", command);
-
-    socket_send(sockfd, command);
+    char *user_command = build_cmd(USER_MSG, username);
+    socket_send(sockfd, user_command);
 
     char *response = calloc(1024, sizeof(char));
+    read(sockfd, response, 2);
     socket_recv(sockfd, response, 1024);
 
+    free(user_command);
+
+    int status_code = atoi(response);
     printf("%s\n", response);
 
-    free(command);
-    free(response);
+    if (status_code == NEED_PASS) {
+        char *pass_command = build_cmd(PASS_MSG, password);
+        socket_send(sockfd, pass_command);
+
+        bzero(response, 1024);
+        socket_recv(sockfd, response, 1024);
+        printf("%s\n", response);
+
+        free(pass_command);
+    }
     
+    free(response);
     return 0;
 }
 
-static cmd_handler handlers[] =  {handle_user};
+static cmd_handler handlers[] =  {handle_login};
 
 int send_cmd(int sockfd, cmd_t cmd, ...) {
     va_list args;
     va_start(args, cmd);
 
-    handlers[cmd](sockfd, args);
-
-    va_end(args);
-
-    return 0;
+    return handlers[cmd](sockfd, args);
 }
 
 int main(int argc, char *argv[])
@@ -199,7 +217,7 @@ int main(int argc, char *argv[])
     int sockfd = get_socket();
     server_connect(sockfd, server_addr);
 
-    send_cmd(sockfd, USER_CMD, username);
+    send_cmd(sockfd, LOGIN_CMD, username, password);
 
     free(username);
     free(host);
