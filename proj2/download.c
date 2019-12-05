@@ -21,20 +21,24 @@
 
 #define NEED_PASS 331
 #define LOGIN_OK 230
+#define PASV_OK 227
 
 typedef struct hostent hostent_t;
 
-typedef enum cmd {
+typedef enum cmd
+{
     LOGIN_CMD,
     PASV_CMD
 } cmd_t;
 
 typedef int (*cmd_handler)(int sockfd, va_list args);
 
-hostent_t *getip(char *host, char *readable_addr) {
+hostent_t *getip(char *host, char *readable_addr)
+{
     hostent_t *h = gethostbyname(host);
 
-    if (h == NULL) {
+    if (h == NULL)
+    {
         herror("gethostbyname");
         exit(1);
     }
@@ -45,14 +49,16 @@ hostent_t *getip(char *host, char *readable_addr) {
     return h;
 }
 
-int parse_user_info(char *username, char *password, char *host, char *url_path, char *info) {
+int parse_user_info(char *username, char *password, char *host, char *url_path, char *info)
+{
     // find colon, at and slash characters
     char *colon = strchr(info, ':');
     char *at = strchr(info, '@');
     char *slash = strchr(info, '/');
 
     // fail if any of those doesnt exist
-    if (colon == NULL || at == NULL || slash == NULL) {
+    if (colon == NULL || at == NULL || slash == NULL)
+    {
         return -1;
     }
 
@@ -70,10 +76,12 @@ int parse_user_info(char *username, char *password, char *host, char *url_path, 
     return 0;
 }
 
-int get_socket() {
+int get_socket()
+{
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (sockfd < 0) {
+    if (sockfd < 0)
+    {
         perror("socket");
         exit(-1);
     }
@@ -81,45 +89,51 @@ int get_socket() {
     return sockfd;
 }
 
-void server_connect(int sockfd, const char *server_addr) {
-	struct sockaddr_in sock_addr;
+void server_connect(int sockfd, const char *server_addr)
+{
+    struct sockaddr_in sock_addr;
 
     /*server address handling*/
-	bzero((char*) &sock_addr, sizeof(sock_addr));
-	sock_addr.sin_family = AF_INET;
-	sock_addr.sin_addr.s_addr = inet_addr(server_addr);	/*32 bit Internet address network byte ordered*/
-	sock_addr.sin_port = htons(SERVER_PORT);		/*server TCP port must be network byte ordered */
+    bzero((char *)&sock_addr, sizeof(sock_addr));
+    sock_addr.sin_family = AF_INET;
+    sock_addr.sin_addr.s_addr = inet_addr(server_addr); /*32 bit Internet address network byte ordered*/
+    sock_addr.sin_port = htons(SERVER_PORT);            /*server TCP port must be network byte ordered */
 
-	/*connect to the server*/
-    int connection_status = connect(sockfd, (struct sockaddr *) &sock_addr, sizeof(sock_addr));
+    /*connect to the server*/
+    int connection_status = connect(sockfd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
 
-    if (connection_status < 0) {
-    	perror("connect");
-		exit(-1);
-	}
+    if (connection_status < 0)
+    {
+        perror("connect");
+        exit(-1);
+    }
 
     char *response = calloc(1024, sizeof(char));
     int bytes_read = 0, total_read = 0;
 
-    do {
+    do
+    {
         bytes_read = read(sockfd, &response[total_read], 1);
-        if (bytes_read < 0) {
+        if (bytes_read < 0)
+        {
             perror("read");
             exit(-1);
         }
 
         total_read++;
     } while (strstr(response, "220 ") == NULL);
-    
+
     printf("%s\n", response);
 
     free(response);
 }
 
-int socket_send(int sockfd, char *buffer) {
+int socket_send(int sockfd, char *buffer)
+{
     int bytes_written = write(sockfd, buffer, strlen(buffer));
 
-    if (bytes_written < 0) {
+    if (bytes_written < 0)
+    {
         perror("write");
         exit(-1);
     }
@@ -127,10 +141,12 @@ int socket_send(int sockfd, char *buffer) {
     return bytes_written;
 }
 
-int socket_recv(int sockfd, char *buffer, int length) {
+int socket_recv(int sockfd, char *buffer, int length)
+{
     int bytes_read = read(sockfd, buffer, length);
 
-    if (bytes_read < 0) {
+    if (bytes_read < 0)
+    {
         perror("read");
         exit(-1);
     }
@@ -138,7 +154,8 @@ int socket_recv(int sockfd, char *buffer, int length) {
     return bytes_read;
 }
 
-char *build_cmd(char *cmd_type, char *cmd_arg) {
+char *build_cmd(char *cmd_type, char *cmd_arg)
+{
     char *command = calloc(strlen(cmd_type) + strlen(cmd_arg) + 2, sizeof(char));
     sprintf(command, "%s %s\n", cmd_type, cmd_arg);
     printf("> %s\n", command);
@@ -146,7 +163,8 @@ char *build_cmd(char *cmd_type, char *cmd_arg) {
     return command;
 }
 
-int handle_login(int sockfd, va_list args) {
+int handle_login(int sockfd, va_list args)
+{
     int login_ret = 0;
     char *username = va_arg(args, char *);
     char *password = va_arg(args, char *);
@@ -164,7 +182,8 @@ int handle_login(int sockfd, va_list args) {
     int status_code = atoi(response);
     printf("%s\n", response);
 
-    if (status_code == NEED_PASS) {
+    if (status_code == NEED_PASS)
+    {
         char *pass_command = build_cmd(PASS_MSG, password);
         socket_send(sockfd, pass_command);
 
@@ -175,20 +194,23 @@ int handle_login(int sockfd, va_list args) {
         free(pass_command);
 
         status_code = atoi(response);
-        if (status_code != LOGIN_OK) login_ret = -1;
+        if (status_code != LOGIN_OK)
+            login_ret = -1;
     }
-    
+
     free(response);
     return login_ret;
 }
 
-int handle_pasv(int sockfd, va_list args) {
+int handle_pasv(int sockfd, va_list args)
+{
     va_end(args);
+    int port = 0;
 
     char *pasv_command = calloc(strlen(PASV_MSG) + 2, sizeof(char));
     sprintf(pasv_command, "%s\n", PASV_MSG);
     printf("> %s\n", pasv_command);
-    
+
     socket_send(sockfd, pasv_command);
 
     char *response = calloc(1024, sizeof(char));
@@ -197,21 +219,39 @@ int handle_pasv(int sockfd, va_list args) {
     int status_code = atoi(response);
     printf("%s\n", response);
 
+    if (status_code != PASV_OK)
+        return -1;
+    
+    // Get the last two bytes to calculate port number
+    char *tok = strtok(strchr(response, '('), ",)");
+    int i = 0;
+    while(tok != NULL) {
+        tok = strtok(NULL, ",)");
+        if(i == 3) port = 256 * atoi(tok);
+        else if(i == 4) port += atoi(tok);
+        ++i;
+    }
+
     free(response);
-    return 0;
+    free(tok);
+
+    return port;
 }
 
-static cmd_handler handlers[] =  {handle_login, handle_pasv};
+static cmd_handler handlers[] = {handle_login, handle_pasv};
 
-int send_cmd(int sockfd, cmd_t cmd, ...) {
+int send_cmd(int sockfd, cmd_t cmd, ...)
+{
     va_list args;
     va_start(args, cmd);
 
     return handlers[cmd](sockfd, args);
 }
 
-int main(int argc, char *argv[]) {
-    if (argc != 2) {
+int main(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
         printf("Usage: ./download ftp://[<username>:<password>@]<host>/<url-path>\n");
         exit(-1);
     }
@@ -221,7 +261,8 @@ int main(int argc, char *argv[]) {
     char *password = calloc(MAX_STR_SIZE, sizeof(char));
     char *url_path = calloc(MAX_STR_SIZE, sizeof(char));
 
-    if (parse_user_info(username, password, host, url_path, &argv[1][6]) == -1) {
+    if (parse_user_info(username, password, host, url_path, &argv[1][6]) == -1)
+    {
         printf("Usage: ./download ftp://[<username>:<password>@]<host>/<url-path>");
         exit(-1);
     }
@@ -235,8 +276,11 @@ int main(int argc, char *argv[]) {
     int sockfd = get_socket();
     server_connect(sockfd, server_addr);
 
-    send_cmd(sockfd, LOGIN_CMD, username, password);
-    send_cmd(sockfd, PASV_CMD);
+    if (send_cmd(sockfd, LOGIN_CMD, username, password) == -1 ||
+        send_cmd(sockfd, PASV_CMD) == -1)
+    {
+        printf("> Invalid login and/or password\n");
+    }
 
     free(username);
     free(host);
