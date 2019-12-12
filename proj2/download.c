@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_STR_SIZE 50
+#define MAX_STR_SIZE 100
 
 #define SERVER_PORT 21
 #define USER_MSG "user"
@@ -24,6 +24,7 @@
 #define NEED_PASS 331
 #define LOGIN_OK 230
 #define PASV_OK 227
+#define FILE_OK 150
 
 // ./download ftp://anonymous:1@ftp.up.pt/pub/CentOS/2.1/readme.txt
 
@@ -194,17 +195,18 @@ char *build_cmd(char *cmd_type, char *cmd_arg)
     return command;
 }
 
-void create_file(int sockfd)
+int create_file(int sockfd)
 {
     int fd = open(user_info.filename, O_WRONLY | O_CREAT, 0666);
-
-    int bytes_written;
-    char buf[1000];
+    int bytes_written = 0;
+    char buf[2];
 
     while((bytes_written = read(user_info.sockfd_client, buf, 1)) > 0)
         write(fd, buf, 1);
-    
+
+    if(bytes_written == -1) return bytes_written;
     puts("> File downloaded succesfully.");
+    return bytes_written;
 }
 
 int handle_retr(int sockfd, va_list args)
@@ -212,6 +214,7 @@ int handle_retr(int sockfd, va_list args)
     va_end(args);
 
     char *response = malloc(1024);
+    char status[3 + 1];
 
     write(sockfd, "retr ", strlen("retr "));
     write(sockfd, user_info.url_path, strlen(user_info.url_path));
@@ -219,9 +222,13 @@ int handle_retr(int sockfd, va_list args)
 
     read(sockfd, response, 1024);
     puts(response);
-    create_file(sockfd);
+    strncpy(status, response, 3);
 
-    return 0;
+    if(atoi(status) != FILE_OK){
+        return -1;
+    }        
+
+    return create_file(sockfd);
 }
 
 int handle_login(int sockfd, va_list args)
