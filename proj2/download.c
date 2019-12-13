@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 
 #define MAX_STR_SIZE 100
@@ -27,6 +28,7 @@
 #define FILE_OK 150
 
 // ./download ftp://anonymous:1@ftp.up.pt/pub/CentOS/2.1/readme.txt
+// ftp.up.pt/pub/apache/ant/source/ varias opcoes de ficheiros
 
 typedef struct hostent hostent_t;
 
@@ -66,7 +68,30 @@ hostent_t *getip(char *host, char *readable_addr)
     return h;
 }
 
-//int parse_user_info(char *username, char *password, char *host, char *url_path, char *info)
+void prompt_password(){
+    puts("> Please insert the password");
+    write(STDOUT_FILENO, "Password: ", 10);
+    struct termios newTerm, oldTerm;
+    char password[MAX_STR_SIZE + 1], echo = '*', ch;
+
+    tcgetattr(STDIN_FILENO, &oldTerm);
+    newTerm = oldTerm;
+    newTerm.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &newTerm);
+
+    int i = 0;
+    while (i < MAX_STR_SIZE && read(STDOUT_FILENO, &ch, 1) && ch != '\n')
+    {
+        password[i++] = ch;
+        write(STDOUT_FILENO, &echo, 1);
+    }
+    password[i] = 0;
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldTerm);
+    strcpy(user_info.password, password);
+    printf("\n");
+}
+
 int parse_user_info(char *info)
 {
     user_info.username = calloc(MAX_STR_SIZE, sizeof(char));
@@ -82,20 +107,31 @@ int parse_user_info(char *info)
     char *last_slash = strrchr(info, '/');
 
     // fail if any of those doesnt exist
-    if (colon == NULL || at == NULL || slash == NULL)
+    if (at == NULL || slash == NULL)
     {
         return -1;
     }
 
+    // Handle password prompt
+    if (colon == NULL)
+        prompt_password();
+    
+
     // compute indices for the characters
-    unsigned colon_index = colon - info;
+    unsigned colon_index;
+
+    if(colon != NULL)
+        colon_index = colon - info;
+    else colon_index = at - info;
+
     unsigned at_index = at - info;
     unsigned slash_index = slash - info;
     unsigned last_slash_index = last_slash - info;
 
+
     // copy username, password, host and path
     strncpy(user_info.username, info, colon_index);
-    strncpy(user_info.password, &info[colon_index + 1], at_index - colon_index - 1);
+    if(colon != NULL) strncpy(user_info.password, &info[colon_index + 1], at_index - colon_index - 1);
     strncpy(user_info.host, &info[at_index + 1], slash_index - at_index - 1);
     strncpy(user_info.url_path, &info[slash_index + 1], strlen(info) - slash_index - 1);
     strncpy(user_info.filename, &info[last_slash_index +1], strlen(info) - last_slash_index - 1);
@@ -190,7 +226,7 @@ char *build_cmd(char *cmd_type, char *cmd_arg)
 {
     char *command = calloc(strlen(cmd_type) + strlen(cmd_arg) + 2, sizeof(char));
     sprintf(command, "%s %s\n", cmd_type, cmd_arg);
-    printf("> %s\n", command);
+    printf("> %s\n", cmd_type);
 
     return command;
 }
@@ -198,15 +234,14 @@ char *build_cmd(char *cmd_type, char *cmd_arg)
 int create_file(int sockfd)
 {
     int fd = open(user_info.filename, O_WRONLY | O_CREAT, 0666);
-    int bytes_written = 0;
-    char buf[2];
+    int read_stat;
+    char buf[1000+1];
 
-    while((bytes_written = read(user_info.sockfd_client, buf, 1)) > 0)
-        write(fd, buf, 1);
+    while((read_stat = read(user_info.sockfd_client, buf, 1000)) > 0)
+        write(fd, buf, read_stat);
+    
 
-    if(bytes_written == -1) return bytes_written;
-    puts("> File downloaded succesfully.");
-    return bytes_written;
+    return read_stat;
 }
 
 int handle_retr(int sockfd, va_list args)
@@ -226,9 +261,16 @@ int handle_retr(int sockfd, va_list args)
 
     if(atoi(status) != FILE_OK){
         return -1;
-    }        
+    }
 
-    return create_file(sockfd);
+    if(create_file(sockfd) == -1) return -1;
+
+    bzero(response, 1024);
+    read(sockfd, response, 1024);
+    puts(response);
+    free(response);
+
+    return 0;
 }
 
 int handle_login(int sockfd, va_list args)
@@ -337,7 +379,7 @@ int main(int argc, char *argv[])
 
     getip(user_info.host, server_addr);
 
-    printf("username: %s\npassword: %s\nhost: %s\nurl_path: %s\nfilename: %s\nip_addr: %s\n", user_info.username, user_info.password, user_info.host, user_info.url_path, user_info.filename, server_addr);
+    printf("username: %s\npassword: ***\nhost: %s\nurl_path: %s\nfilename: %s\nip_addr: %s\n", user_info.username, user_info.host, user_info.url_path, user_info.filename, server_addr);
 
     int sockfd = get_socket();
     server_connect(sockfd, server_addr);
