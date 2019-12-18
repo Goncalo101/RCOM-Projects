@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <errno.h>
@@ -94,6 +95,8 @@ void prompt_password(){
 
 int parse_user_info(char *info)
 {
+    puts(info);
+    
     user_info.username = calloc(MAX_STR_SIZE, sizeof(char));
     user_info.host = calloc(MAX_STR_SIZE, sizeof(char));
     user_info.password = calloc(MAX_STR_SIZE, sizeof(char));
@@ -107,35 +110,42 @@ int parse_user_info(char *info)
     char *last_slash = strrchr(info, '/');
 
     // fail if any of those doesnt exist
-    if (at == NULL || slash == NULL)
+    if (slash == NULL)
     {
         return -1;
     }
 
+    if(at == NULL){
+        strcpy(user_info.username, "anonymous");
+        strcpy(user_info.password, "emedemaria");
+    }
+
     // Handle password prompt
-    if (colon == NULL)
+    if (colon == NULL && at != NULL)
         prompt_password();
     
 
     // compute indices for the characters
-    unsigned colon_index;
+    unsigned colon_index, at_index;
 
     if(colon != NULL)
         colon_index = colon - info;
-    else colon_index = at - info;
+    else if(at != NULL)colon_index = at - info;
+    else colon_index = -1;
 
-    unsigned at_index = at - info;
+    if(at != NULL)
+        at_index = at - info;
+    else at_index = -1;
     unsigned slash_index = slash - info;
     unsigned last_slash_index = last_slash - info;
 
 
     // copy username, password, host and path
-    strncpy(user_info.username, info, colon_index);
+    if(at != NULL)strncpy(user_info.username, info, colon_index);
     if(colon != NULL) strncpy(user_info.password, &info[colon_index + 1], at_index - colon_index - 1);
     strncpy(user_info.host, &info[at_index + 1], slash_index - at_index - 1);
     strncpy(user_info.url_path, &info[slash_index + 1], strlen(info) - slash_index - 1);
     strncpy(user_info.filename, &info[last_slash_index +1], strlen(info) - last_slash_index - 1);
-
     return 0;
 }
 
@@ -231,7 +241,7 @@ char *build_cmd(char *cmd_type, char *cmd_arg)
     return command;
 }
 
-int create_file(int sockfd)
+int create_file(int sockfd, off_t size)
 {
     int fd = open(user_info.filename, O_WRONLY | O_CREAT, 0666);
     int read_stat;
@@ -239,8 +249,12 @@ int create_file(int sockfd)
 
     while((read_stat = read(user_info.sockfd_client, buf, 1000)) > 0)
         write(fd, buf, read_stat);
-    
-
+    struct stat status;
+    fstat(fd, &status);
+    if(size != status.st_size){
+        puts("> File size is not the same.");
+        return -1;
+    }
     return read_stat;
 }
 
@@ -259,11 +273,18 @@ int handle_retr(int sockfd, va_list args)
     puts(response);
     strncpy(status, response, 3);
 
-    if(atoi(status) != FILE_OK){
+    int stat = atoi(status);
+    if(stat != FILE_OK){
+        if(stat == 550)
+            puts("> File does not exist");
         return -1;
     }
 
-    if(create_file(sockfd) == -1) return -1;
+    char *par = strrchr(response, '(') + 1;
+    char *space = strrchr(response, ' ');
+    char *num = malloc(25+1);
+    strncpy(num, par, space - par);
+    if(create_file(sockfd, atoi(num)) == -1) return -1;
 
     bzero(response, 1024);
     read(sockfd, response, 1024);
@@ -402,7 +423,7 @@ int main(int argc, char *argv[])
 
     if(send_cmd(sockfd, RETR_CMD) == -1)
     {
-        printf("> Error retrieving file");
+        printf("> Error retrieving file\n");
         exit(-1);
     }
 
