@@ -290,8 +290,6 @@ int handle_retr(int sockfd, va_list args)
     read(sockfd, response, 1024);
     puts(response);
     free(response);
-    free(par);
-    free(space);
     free(num);
 
     return 0;
