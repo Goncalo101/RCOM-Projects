@@ -243,12 +243,20 @@ char *build_cmd(char *cmd_type, char *cmd_arg)
 
 int create_file(int sockfd, off_t size)
 {
+    int counter = 0;
     int fd = open(user_info.filename, O_WRONLY | O_CREAT, 0666);
     int read_stat;
     char buf[1000+1];
 
-    while((read_stat = read(user_info.sockfd_client, buf, 1000)) > 0)
+    printf("Downloading...\n");
+    while((read_stat = read(user_info.sockfd_client, buf, 1000)) > 0) {
+        if (counter++ % 2 == 0)
+            printf(". ");
         write(fd, buf, read_stat);
+    }
+
+    printf("\n");
+
     struct stat status;
     fstat(fd, &status);
     if(size != status.st_size){
